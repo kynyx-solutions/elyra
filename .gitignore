@@ -3,3 +3,6 @@ PRD.md
 # Custom domain file: add back only after elyrashree.com is registered and its DNS points to GitHub Pages
 CNAME
 .DS_Store
+
+# Original team photos before cropping (not published)
+team-photos/

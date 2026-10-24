@@ -70,9 +70,9 @@
       ["shop.html", "Shop"],
       ["bridal.html", "Bridal"],
       ["custom.html", "Bespoke"],
-      ["learn.html", "Diamond Guide"],
-      ["blog.html", "Blog"],
       ["about.html", "About"],
+      ["blog.html", "Blog"],
+      ["learn.html", "Diamond Guide"],
       ["consultation.html", "Book a Consultation"],
       ["contact.html", "Contact"]
     ];
