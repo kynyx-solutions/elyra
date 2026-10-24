@@ -8,7 +8,7 @@
 //   RESEND_API_KEY   your Resend API key
 //   ALERT_FROM       e.g. "Elyra Leads <leads@elyrashree.com>" (a domain verified in Resend)
 //   WEBHOOK_SECRET   any long random string; also set as the webhook's x-webhook-secret header
-//   ADMIN_URL        e.g. https://kynyx-solutions.github.io/elyra/admin/
+//   ADMIN_URL        e.g. https://elyra.kynyx.com/admin/
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";

@@ -31,7 +31,7 @@ In **Authentication → URL Configuration**:
 
 | Setting | Value |
 |---|---|
-| Site URL | `https://kynyx-solutions.github.io/elyra/admin/` (later `https://elyrashree.com/admin/`) |
+| Site URL | `https://elyra.kynyx.com/admin/` (later `https://elyrashree.com/admin/`) |
 | Redirect URLs | add the same address, plus `http://localhost:8080/admin/` for local testing |
 
 In **Authentication → Providers → Email**, keep **Email** enabled and **Confirm email** on.
@@ -55,7 +55,7 @@ In **Authentication → Providers → Email**, keep **Email** enabled and **Conf
 
 ## 5. Create the owner account
 
-1. Open **`<your site>/admin/#/signup`**, e.g. `https://kynyx-solutions.github.io/elyra/admin/#/signup`.
+1. Open **`<your site>/admin/#/signup`**, e.g. `https://elyra.kynyx.com/admin/#/signup`.
 2. Sign up with the **owner email from step 2** and a strong password.
 3. Click the confirmation link in your email, then log in at `/admin`.
 4. To add staff, go to **Staff → Invite someone**. They sign up at the same `#/signup` link with the invited email.
@@ -76,7 +76,7 @@ This needs a free **Resend** account (resend.com) and, ideally, your own domain 
    | `RESEND_API_KEY` | your Resend API key |
    | `ALERT_FROM` | `Elyra Leads <leads@elyrashree.com>` |
    | `WEBHOOK_SECRET` | any long random text |
-   | `ADMIN_URL` | `https://kynyx-solutions.github.io/elyra/admin/` |
+   | `ADMIN_URL` | `https://elyra.kynyx.com/admin/` |
 
 4. **Create the webhook:** go to **Database → Webhooks → Create a new hook**:
    - **Table:** `leads`, **Events:** Insert
