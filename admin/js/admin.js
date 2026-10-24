@@ -10,8 +10,8 @@
 
   const cfg = window.ELYRA_SUPABASE || {};
   const app = document.getElementById("app");
-  const SITE = "../";
-  const BASE = location.origin + location.pathname;
+  const SITE = "/";
+  const BASE = location.origin + "/admin/";
   const FILE_PRICING = window.ELYRA_PRICING || {};
   const FILE_SITE = window.ELYRA || {};
 
