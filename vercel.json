@@ -16,7 +16,6 @@
       ]
     }
   ],
-  "trailingSlash": false,
   "redirects": [
     {
       "source": "/admin",
