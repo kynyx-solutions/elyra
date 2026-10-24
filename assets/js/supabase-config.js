@@ -7,6 +7,6 @@
    Leave both blank to run the site from the built-in files only.
    ============================================================ */
 window.ELYRA_SUPABASE = {
-  url: "",        // e.g. "https://abcdefghijkl.supabase.co"
-  anonKey: ""     // e.g. "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+  url: "https://aywbtqzxuwtfiqnljdyp.supabase.co",
+  anonKey: "sb_publishable_AYKO9vqthdawLu973cAFAg_KyvzGnS7"   // publishable key (safe to publish)
 };

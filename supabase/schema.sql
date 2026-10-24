@@ -312,5 +312,5 @@ create policy leads_upload_delete on storage.objects for delete using (bucket_id
 -- FIRST OWNER: replace with the owner's login email, then they sign up
 -- at <your site>/admin/#/signup with that email to get full access.
 -- ============================================================
-insert into public.staff_invites (email, role) values ('OWNER_EMAIL_HERE', 'owner')
+insert into public.staff_invites (email, role) values ('kynyxsolutions@gmail.com', 'owner')
 on conflict (email) do update set role = 'owner';
