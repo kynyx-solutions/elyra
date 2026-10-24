@@ -8,7 +8,7 @@ A fast, mobile-first catalogue website where customers order through WhatsApp. I
 |---|---|---|
 | Home | `index.html` | Hero, trust strip, categories, featured pieces, why Elyra, how ordering works, bridal, guides, founder note, reviews, CTA |
 | Shop | `shop.html` | Full catalogue with filters (category, metal, price, occasion) and sorting; filters are shareable links, e.g. `shop.html?category=rings` |
-| Product | `product.html?id=SKU` | One template for every product: photos, GST-inclusive price, natural-diamond disclosure, specifications, certificate, WhatsApp order and video-call buttons, related pieces |
+| Product | `product.html?id=SKU` | One template for every product: photos, GST-inclusive price, natural-diamond disclosure, specifications, certificate, WhatsApp order and call buttons, related pieces |
 | Bridal | `bridal.html` | Bridal categories, process and timeline, bridal products, planning tips |
 | Diamond guide | `learn.html` | What a natural diamond is, natural vs lab-grown, 4Cs, six diamond shapes, reading a GIA/IGI certificate, gold purity and HUID, care, buying checklist |
 | About | `about.html` | Story, values, team, business details (legal name, GSTIN, address) |

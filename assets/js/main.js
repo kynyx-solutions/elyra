@@ -358,7 +358,7 @@
             '<details><summary>See price breakdown</summary><table class="table quote-table"><tbody id="pd-breakdown"></tbody></table>' +
             '<p class="small muted">Based on rates as of ' + esc(PR.ratesUpdated) + ". Gold and diamond prices change, so your final price is confirmed in writing before you pay.</p></details>" +
             '<div class="btn-row"><a class="btn btn-gold" id="pd-order" href="#" target="_blank" rel="noopener" data-track="' + esc(p.id) + '">' + WA_ICON + " Order on WhatsApp</a>" +
-            '<a class="btn btn-outline" id="pd-call" href="#" target="_blank" rel="noopener">Book a video call</a></div></div>' +
+            '<a class="btn btn-outline" id="pd-call" href="#" target="_blank" rel="noopener">Book a call</a></div></div>' +
           '<ul class="pd-promise" id="pd-promise"></ul>' +
           '<h2 class="h3">Specifications</h2><div class="table-scroll"><table class="table"><tbody id="pd-specs"></tbody></table></div>' +
           '<p class="small muted">Metal weight is approximate and varies with size and design. Your invoice lists the exact gross weight, metal purity, diamond weight and certificate details. <a href="learn.html#certificate">How to read a certificate</a>.</p>' +
@@ -447,7 +447,7 @@
         link.href
       ].filter(Boolean);
       document.getElementById("pd-order").href = waLink(lines.join("\n"));
-      document.getElementById("pd-call").href = waLink("Hi Elyra, I'd like a video call to see the " + p.name + " (" + p.id + ") in " + metalLabel(s) + " with a " + caratLabel(p, s.carat) + " " + PR.stones[s.stone].short.toLowerCase() + " diamond.");
+      document.getElementById("pd-call").href = waLink("Hi Elyra, I'd like a call about the " + p.name + " (" + p.id + ") in " + metalLabel(s) + " with a " + caratLabel(p, s.carat) + " " + PR.stones[s.stone].short.toLowerCase() + " diamond.");
 
       var md = document.querySelector('meta[name="description"]');
       if (md) md.setAttribute("content", p.name + " in " + metalLabel(s) + " with " + caratLabel(p, s.carat) + " " + PR.stones[s.stone].label.toLowerCase() + ". Customise metal, purity, diamond and carat. From Elyra by Shree Creations, Patna.");
