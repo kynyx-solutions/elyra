@@ -71,6 +71,7 @@
       ["bridal.html", "Bridal"],
       ["custom.html", "Bespoke"],
       ["learn.html", "Diamond Guide"],
+      ["blog.html", "Blog"],
       ["about.html", "About"],
       ["consultation.html", "Book a Consultation"],
       ["contact.html", "Contact"]
@@ -106,7 +107,7 @@
         '<p class="social"><a data-cfg-href="instagram" href="#" target="_blank" rel="noopener">Instagram</a> · <a data-cfg-href="facebook" href="#" target="_blank" rel="noopener">Facebook</a> · <a data-cfg-href="googleReviewsUrl" href="#" target="_blank" rel="noopener">Google</a></p></div>' +
         "<div><h4>Shop</h4><ul>" + shop + "</ul></div>" +
         '<div><h4>Help</h4><ul><li><a href="custom.html">You dream it, we create it</a></li><li><a href="consultation.html">Book a consultation</a></li><li><a href="faq.html">FAQ</a></li><li><a href="shipping.html">Shipping & delivery</a></li><li><a href="returns.html">Returns & refunds</a></li><li><a href="exchange-buyback.html">Exchange & buyback</a></li><li><a href="certification.html">Certification & hallmarking</a></li></ul></div>' +
-        '<div><h4>Company</h4><ul><li><a href="about.html">About Elyra</a></li><li><a href="learn.html">Diamond guide</a></li><li><a href="contact.html">Contact</a></li><li><a href="privacy.html">Privacy policy</a></li><li><a href="terms.html">Terms of use & sale</a></li><li><a href="grievance.html">Grievance redressal</a></li></ul></div>' +
+        '<div><h4>Company</h4><ul><li><a href="about.html">About Elyra</a></li><li><a href="learn.html">Diamond guide</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li><li><a href="privacy.html">Privacy policy</a></li><li><a href="terms.html">Terms of use & sale</a></li><li><a href="grievance.html">Grievance redressal</a></li></ul></div>' +
       "</div>" +
       '<p class="disclosure">Every diamond sold by Elyra is clearly identified as natural or laboratory-grown on its listing, quote, certificate and invoice. Our natural diamonds are ethically sourced under the Kimberley Process.</p>' +
       '<div class="ftr-legal"><span>© <span data-year></span> <span data-cfg="legalName"></span>. All rights reserved.</span><span data-requires="gstin">GSTIN: <span data-cfg="gstin"></span></span></div>' +
@@ -149,7 +150,7 @@
   function card(p) {
     var d = normalise(p, defaultsOf(p));
     return '<a class="pcard" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
-      '<div class="pcard-media">' + media(p) + (p.sample && C.showSampleBadges ? '<span class="badge">Sample listing</span>' : "") + "</div>" +
+      '<div class="pcard-media">' + media(p) + (p.status === "sold_out" ? '<span class="badge">Sold out: made to order</span>' : p.sample && C.showSampleBadges ? '<span class="badge">Sample listing</span>' : "") + "</div>" +
       '<div class="pcard-body"><div class="pcard-cat">' + esc(CATEGORIES[p.category] || "") + "</div>" +
       "<h3>" + esc(p.name) + "</h3>" +
       '<p class="pcard-meta">' + esc(metalLabel(d)) + "<br>" + esc(caratLabel(p, d.carat)) + " " + esc(PR.stones[d.stone].short.toLowerCase()) + " diamond</p>" +
@@ -395,7 +396,8 @@
       var qt = quote(p, s), q = qualityOf(s), pu = purityOf(s);
       renderGallery(imagesFor(s));
       var isDefault = Object.keys(PARAMS).every(function (k) { return String(s[k]) === String(p.custom.defaults[k]); });
-      var ready = !p.madeToOrder && isDefault && !s.engraving;
+      var inStock = p.status !== "sold_out" && (p.stock === undefined || p.stock > 0);
+      var ready = !p.madeToOrder && isDefault && !s.engraving && inStock;
 
       document.getElementById("pd-price").textContent = inr(qt.total);
       document.getElementById("pd-total").textContent = inr(qt.total);
@@ -421,7 +423,8 @@
         ["Hallmark", pu.mark],
         ["Size / fit", s.size ? "Ring size " + s.size : p.size],
         s.engraving ? ["Engraving", "“" + s.engraving + "”"] : null,
-        ["Availability", ready ? "Ready to ship: dispatched in " + C.dispatchReady : "Made to order: ready in " + C.dispatchMade],
+        ["Availability", ready ? "Ready to ship: dispatched in " + C.dispatchReady + (p.stock && p.stock <= 2 ? " (only " + p.stock + " left)" : "") :
+          (p.status === "sold_out" ? "This piece is sold out. We can make it for you: ready in " : "Made to order: ready in ") + C.dispatchMade],
         ["SKU", p.id]
       ].filter(Boolean);
       document.getElementById("pd-specs").innerHTML = rows.map(function (r) {
@@ -466,6 +469,18 @@
       }
       update();
     });
+    function logClick(type) {
+      var q = qualityOf(s);
+      saveLead({
+        type: type, product_id: p.id, product_name: p.name,
+        config: { metal: metalLabel(s), stone: PR.stones[s.stone].label, quality: q.label + " (" + q.color + ", " + q.clarity + ")", carat: caratLabel(p, s.carat), ring_size: s.size || null, engraving: s.engraving || null },
+        estimated_price: quote(p, s).total,
+        details: { note: "Customer tapped \"" + (type === "order" ? "Order on WhatsApp" : "Book a call") + "\". Contact details arrive on WhatsApp." }
+      });
+    }
+    document.getElementById("pd-order").addEventListener("click", function () { logClick("order"); });
+    document.getElementById("pd-call").addEventListener("click", function () { logClick("call"); });
+
     var engrave = document.getElementById("pd-engrave");
     if (engrave) engrave.addEventListener("input", function () { s.engraving = engrave.value.trim(); update(); });
 
@@ -519,8 +534,83 @@
     el.innerHTML = list.map(function (r) {
       var n = Math.max(1, Math.min(5, r.stars || 5));
       return '<figure class="card review-card"><div class="rating-stars" aria-label="' + n + ' out of 5 stars">' + "★★★★★".slice(0, n) + "</div>" +
-        "<blockquote><p>“" + esc(r.text) + "”</p></blockquote><figcaption><cite>" + esc(r.name || "Google reviewer") + "</cite> · Google review</figcaption></figure>";
+        "<blockquote><p>“" + esc(r.text) + "”</p></blockquote><figcaption><cite>" + esc(r.name || "Customer") + "</cite>" +
+        (r.city ? ", " + esc(r.city) : "") + " · " + esc(r.source || "Google") + " review</figcaption></figure>";
     }).join("");
+  }
+
+  /* ---------- leads → database (when Supabase is connected) ---------- */
+  function saveLead(lead, files) {
+    var db = window.ElyraDB;
+    if (!db) return Promise.resolve(false);
+    lead.source_page = page();
+    var id = window.crypto && crypto.randomUUID ? crypto.randomUUID() : null;
+    var uploads = (files || []).slice(0, 6).map(function (file, i) {
+      var path = (id || Date.now()) + "/" + i + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-60);
+      return db.storage.from("lead-uploads").upload(path, file, { contentType: file.type })
+        .then(function (r) { return r.error ? null : path; }, function () { return null; });
+    });
+    return Promise.all(uploads).then(function (paths) {
+      lead.photos = paths.filter(Boolean);
+      if (id) lead.id = id;
+      return db.from("leads").insert(lead);
+    }).then(function (r) { return !r.error; }, function () { return false; });
+  }
+
+  /* ---------- blog ---------- */
+  function postDate(d) {
+    return d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+  }
+  function postCard(p) {
+    return '<a class="card link post-card" href="post.html?slug=' + encodeURIComponent(p.slug) + '">' +
+      (p.cover_image ? '<div class="post-cover"><img src="' + esc(p.cover_image) + '" alt="" loading="lazy"></div>' : "") +
+      '<span class="label">' + esc((p.tags && p.tags[0]) || "Journal") + " · " + esc(postDate(p.published_at)) + "</span>" +
+      "<h3>" + esc(p.title) + "</h3><p class=\"muted\">" + esc(p.excerpt) + '</p><span class="text-link">Read →</span></a>';
+  }
+  function initBlog() {
+    var db = window.ElyraDB;
+    var list = document.getElementById("blog-list");
+    var latest = document.querySelector("[data-latest-posts]");
+    var post = document.getElementById("post");
+    var cols = "slug,title,excerpt,cover_image,tags,published_at";
+    if (list) {
+      if (!db) { list.innerHTML = '<p class="muted">Our first articles are on their way.</p>'; }
+      else db.from("posts").select(cols).eq("status", "published").order("published_at", { ascending: false }).then(function (r) {
+        list.innerHTML = r.data && r.data.length ? r.data.map(postCard).join("") : '<p class="muted">Our first articles are on their way.</p>';
+      });
+    }
+    if (latest) {
+      var section = latest.closest("section");
+      if (!db) section.hidden = true;
+      else db.from("posts").select(cols).eq("status", "published").order("published_at", { ascending: false }).limit(3).then(function (r) {
+        if (r.data && r.data.length) latest.innerHTML = r.data.map(postCard).join("");
+        else section.hidden = true;
+      });
+    }
+    if (post) {
+      var slug = new URLSearchParams(location.search).get("slug");
+      var missing = '<div class="empty"><h2>Article not found</h2><p class="muted">It may have moved.</p><a class="btn btn-gold" href="blog.html">Back to the blog</a></div>';
+      if (!db || !slug) { post.innerHTML = missing; return; }
+      db.from("posts").select("*").eq("slug", slug).eq("status", "published").maybeSingle().then(function (r) {
+        var p = r.data;
+        if (!p) { post.innerHTML = missing; return; }
+        document.title = (p.seo_title || p.title) + " | Elyra by Shree Creations";
+        var md = document.querySelector('meta[name="description"]');
+        if (md) md.setAttribute("content", p.seo_description || p.excerpt || "");
+        var body = window.marked && window.DOMPurify ? DOMPurify.sanitize(marked.parse(p.body || "")) : esc(p.body || "").replace(/\n/g, "<br>");
+        post.innerHTML = '<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> / <a href="blog.html">Blog</a> / <span>' + esc(p.title) + "</span></nav>" +
+          '<article class="post"><span class="eyebrow">' + esc((p.tags || []).join(" · ") || "Journal") + "</span><h1>" + esc(p.title) + "</h1>" +
+          '<p class="post-meta">' + esc(postDate(p.published_at)) + (p.author_name ? " · " + esc(p.author_name) : "") + "</p>" +
+          (p.cover_image ? '<div class="post-hero"><img src="' + esc(p.cover_image) + '" alt=""></div>' : "") +
+          '<div class="prose post-body">' + body + "</div>" +
+          '<div class="note"><p>Questions about anything in this article? <a href="#" data-wa="Hi Elyra, I read your article: ' + esc(p.title) + '">Ask us on WhatsApp</a>.</p></div></article>';
+        applyConfig(post);
+        var ld = document.createElement("script");
+        ld.type = "application/ld+json";
+        ld.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "Article", headline: p.title, datePublished: p.published_at, dateModified: p.updated_at, image: p.cover_image ? [p.cover_image] : [], author: { "@type": "Person", name: p.author_name || "Elyra by Shree Creations" }, publisher: { "@type": "Organization", name: "Elyra by Shree Creations" } });
+        document.head.appendChild(ld);
+      });
+    }
   }
 
   function initPhotoPreviews() {
@@ -549,19 +639,30 @@
       f.addEventListener("submit", function (e) {
         e.preventDefault();
         if (!f.reportValidity()) return;
+        var ok = f.querySelector(".form-ok");
+        var trap = f.querySelector('[name="website"]');
+        if (trap && trap.value) { if (ok) ok.hidden = false; return; } // spam bot
         var lines = [f.getAttribute("data-wa-form")];
+        var lead = { type: f.getAttribute("data-lead-type") || "enquiry", details: {} };
         f.querySelectorAll("[name]").forEach(function (el) {
-          if (el.type === "checkbox" || !el.value) return;
+          if (el.type === "checkbox" || el.name === "website" || !el.value) return;
           var lab = f.querySelector('label[for="' + el.id + '"]');
           var name = (lab ? lab.textContent : el.name).replace(/\s*\*\s*$/, "").trim();
           lines.push(name + ": " + el.value);
+          if (["name", "phone", "email", "city"].indexOf(el.name) > -1) lead[el.name] = el.value.trim();
+          else lead.details[name] = el.value;
         });
         var photos = f.querySelector('input[type="file"]');
-        if (photos && photos.files.length) lines.push("Photos: I'm attaching " + photos.files.length + " photo" + (photos.files.length > 1 ? "s" : "") + " in this chat.");
+        var files = photos ? Array.prototype.slice.call(photos.files) : [];
+        if (files.length) lines.push("Photos: I'm attaching " + files.length + " photo" + (files.length > 1 ? "s" : "") + " in this chat.");
         track("form_submit", f.getAttribute("data-wa-form"));
         window.open(waLink(lines.join("\n")), "_blank", "noopener");
-        var ok = f.querySelector(".form-ok");
         if (ok) ok.hidden = false;
+        var status = f.querySelector(".form-status");
+        if (status && files.length && window.ElyraDB) status.textContent = "Uploading your photos…";
+        saveLead(lead, files).then(function (saved) {
+          if (status && files.length && window.ElyraDB) status.textContent = saved ? "Photos received. Thank you!" : "We couldn't upload your photos. Please attach them in WhatsApp.";
+        });
       });
     });
   }
@@ -626,15 +727,25 @@
   var f = document.getElementById("site-footer");
   if (h) h.outerHTML = headerHTML();
   if (f) f.outerHTML = footerHTML();
-  renderLists();
-  initShop();
-  initProduct();
-  initPolicyNav();
-  renderReviews();
-  applyConfig(document);
+  initMenu();
   initForms();
   initPhotoPreviews();
-  initMenu();
-  initAnalytics();
-  setupBanner();
+
+  function start() {
+    // pick up anything data.js loaded from the database
+    C = window.ELYRA || C;
+    PRODUCTS = window.ELYRA_PRODUCTS || [];
+    PR = window.ELYRA_PRICING || {};
+    renderLists();
+    initShop();
+    initProduct();
+    initPolicyNav();
+    renderReviews();
+    initBlog();
+    applyConfig(document);
+    initAnalytics();
+    setupBanner();
+  }
+  if (window.ElyraDataReady && window.ElyraDataReady.then) window.ElyraDataReady.then(start, start);
+  else start();
 })();

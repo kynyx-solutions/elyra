@@ -40,7 +40,7 @@
       <div class="form-card">
         <h2 class="h3">Send a message</h2>
         <p class="muted small">Submitting opens WhatsApp with your message filled in.</p>
-        <form class="form" data-wa-form="Website enquiry">
+        <form class="form" data-lead-type="enquiry" data-wa-form="Website enquiry">
           <div class="form-row">
             <div class="field"><label for="m-name">Your name *</label><input id="m-name" name="name" autocomplete="name" required></div>
             <div class="field"><label for="m-topic">Topic *</label>
@@ -55,10 +55,16 @@
               </select>
             </div>
           </div>
+          <div class="form-row">
+            <div class="field"><label for="m-phone">WhatsApp number *</label><input id="m-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91" required></div>
+            <div class="field"><label for="m-city">City</label><input id="m-city" name="city" autocomplete="address-level2"></div>
+          </div>
+          <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="field"><label for="m-order">Order / invoice number (if any)</label><input id="m-order" name="order"></div>
           <div class="field"><label for="m-msg">Message *</label><textarea id="m-msg" name="message" required></textarea></div>
           <label class="check"><input type="checkbox" required> <span>I agree that Elyra may reply on WhatsApp/phone, as described in the <a href="privacy.html">privacy policy</a>.</span></label>
           <button class="btn btn-gold" type="submit">Send on WhatsApp</button>
+          <p class="form-status small muted" aria-live="polite"></p>
           <p class="form-ok" hidden>WhatsApp should have opened with your message. Prefer email? Write to <a data-cfg-href="email" data-cfg="email" href="#"></a>.</p>
         </form>
       </div>
@@ -70,6 +76,8 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/products.js"></script>
 <script src="assets/js/pricing.js"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/data.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

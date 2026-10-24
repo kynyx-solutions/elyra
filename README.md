@@ -24,6 +24,19 @@ A fast, mobile-first catalogue website where customers order through WhatsApp. I
 | Grievance redressal | `grievance.html` | Grievance Officer details (required by the Consumer Protection (E-Commerce) Rules, 2020) |
 | 404 | `404.html` | Friendly "not found" page |
 
+## Admin dashboard (Supabase)
+
+The site has an admin dashboard at **`/admin`**. Logged-in owners and staff can:
+- manage **leads** (enquiries, consultations, bespoke requests and order clicks), **customers** and **orders**
+- manage **products and inventory**
+- write **blog** posts and manage **reviews**
+- update **rates and site settings**
+- manage **staff**
+
+It runs on Supabase (database, login and image storage). **Setup: follow [`supabase/SETUP.md`](supabase/SETUP.md).** Until Supabase is connected, the site runs from the files below, and `/admin` shows a "Connect Supabase" message.
+
+Once connected, the dashboard becomes the place to manage products, rates and settings. The files below then only act as a fallback.
+
 ## Files you edit
 
 | File | What's in it |

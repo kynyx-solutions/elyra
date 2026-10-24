@@ -66,7 +66,7 @@
       </div>
 
       <div class="form-card">
-        <form class="form" data-wa-form="Bespoke design request (You dream it, we create it)">
+        <form class="form" data-lead-type="bespoke" data-wa-form="Bespoke design request (You dream it, we create it)">
           <label class="upload" for="d-photo">
             <input id="d-photo" type="file" accept="image/*" multiple data-preview="d-previews">
             <strong>Add your photo(s)</strong>
@@ -77,6 +77,11 @@
             <div class="field"><label for="d-name">Your name *</label><input id="d-name" name="name" autocomplete="name" required></div>
             <div class="field"><label for="d-city">City *</label><input id="d-city" name="city" autocomplete="address-level2" required></div>
           </div>
+          <div class="form-row">
+            <div class="field"><label for="d-phone">WhatsApp number *</label><input id="d-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91" required></div>
+            <div class="field"><label for="d-email">Email (optional)</label><input id="d-email" name="email" type="email" autocomplete="email"></div>
+          </div>
+          <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="form-row">
             <div class="field"><label for="d-type">Type of piece *</label>
               <select id="d-type" name="piece" required>
@@ -111,6 +116,7 @@
           <div class="field"><label for="d-notes">Describe your dream piece</label><textarea id="d-notes" name="notes" placeholder="What do you love about the design? Anything you would change?"></textarea></div>
           <label class="check"><input type="checkbox" required> <span>I agree that Elyra may contact me on WhatsApp/phone about this request, as described in the <a href="privacy.html">privacy policy</a>.</span></label>
           <button class="btn btn-gold" type="submit">Continue on WhatsApp</button>
+          <p class="form-status small muted" aria-live="polite"></p>
           <p class="form-ok" hidden>WhatsApp should now be open with your details. <strong>Tap the 📎 attachment icon to add your photo, then send.</strong></p>
         </form>
       </div>
@@ -122,6 +128,8 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/products.js"></script>
 <script src="assets/js/pricing.js"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/data.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

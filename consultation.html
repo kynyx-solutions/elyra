@@ -40,11 +40,16 @@
       <div class="form-card">
         <h2 class="h3">Request a time</h2>
         <p class="muted small">Submitting opens WhatsApp with your details filled in. Just press send.</p>
-        <form class="form" data-wa-form="Consultation request (website)">
+        <form class="form" data-lead-type="consultation" data-wa-form="Consultation request (website)">
           <div class="form-row">
             <div class="field"><label for="c-name">Your name *</label><input id="c-name" name="name" autocomplete="name" required></div>
             <div class="field"><label for="c-city">City *</label><input id="c-city" name="city" autocomplete="address-level2" required></div>
           </div>
+          <div class="form-row">
+            <div class="field"><label for="c-phone">WhatsApp number *</label><input id="c-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91" required></div>
+            <div class="field"><label for="c-email">Email (optional)</label><input id="c-email" name="email" type="email" autocomplete="email"></div>
+          </div>
+          <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="form-row">
             <div class="field"><label for="c-type">Looking for *</label>
               <select id="c-type" name="type" required>
@@ -93,6 +98,7 @@
           <div class="field"><label for="c-notes">Anything else?</label><textarea id="c-notes" name="notes" placeholder="Designs you like, ring size, metal preference…"></textarea></div>
           <label class="check"><input type="checkbox" required> <span>I agree that Elyra may contact me on WhatsApp/phone about this request, as described in the <a href="privacy.html">privacy policy</a>.</span></label>
           <button class="btn btn-gold" type="submit">Send on WhatsApp</button>
+          <p class="form-status small muted" aria-live="polite"></p>
           <p class="form-ok" hidden>WhatsApp should have opened with your request. If it didn't, message us at <a data-cfg-href="phone" data-cfg="phone" href="#"></a>.</p>
         </form>
       </div>
@@ -104,6 +110,8 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/products.js"></script>
 <script src="assets/js/pricing.js"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/data.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>
