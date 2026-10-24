@@ -139,6 +139,19 @@ p { margin: 0 0 1em; }
 .trust ul { list-style: none; margin: 0; padding: 18px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; font-size: 0.88rem; color: var(--muted-light); }
 .trust li::before { content: "◆"; color: var(--gold); margin-right: 8px; font-size: 0.7em; vertical-align: 2px; }
 
+/* continuously scrolling trust strip */
+.marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.trust .marquee-track { flex-wrap: nowrap; justify-content: flex-start; gap: 0; width: max-content; padding: 17px 0; font-size: 0.9rem; letter-spacing: 0.02em; animation: marquee 38s linear infinite; }
+.trust .marquee-track li { white-space: nowrap; padding-right: 56px; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .trust .marquee-track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; gap: 10px 34px; }
+  .trust .marquee-track li { padding-right: 0; }
+  .trust .marquee-track li[aria-hidden="true"] { display: none; }
+  .marquee { -webkit-mask-image: none; mask-image: none; }
+}
+
 /* ---------- cards ---------- */
 .card { background: var(--panel); border: 1px solid var(--line-dark); border-radius: var(--radius); padding: 28px; }
 .light .card, .paper .card { background: var(--paper); border-color: var(--line-light); box-shadow: 0 6px 24px rgba(40, 30, 10, 0.06); }
