@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kynyx-solutions.github.io/elyra/sitemap.xml

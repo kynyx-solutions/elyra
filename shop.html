@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop Diamond Jewellery, Made Your Way | Elyra by Shree Creations</title>
+<meta name="description" content="Shop rings, earrings, pendants, bracelets, bridal sets and mangalsutras. Choose natural or lab-grown diamonds in gold, platinum or silver. GST-inclusive prices and insured delivery across India.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Serif:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main">
+
+  <section class="page-hero">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> / <span>Shop</span></nav>
+      <span class="eyebrow">The collection</span>
+      <h1>Diamond jewellery, made your way</h1>
+      <p class="lead">Choose any piece, then make it yours: metal, purity, colour, natural or lab-grown diamond, quality and carat. The price updates as you choose. Can't find it? <a class="text-link" href="custom.html">You dream it, we create it.</a></p>
+    </div>
+  </section>
+
+  <section class="section light">
+    <div class="wrap">
+      <form class="filters" id="filters" aria-label="Filter jewellery">
+        <div class="field"><label for="f-category">Category</label><select id="f-category" name="category"></select></div>
+        <div class="field"><label for="f-metal">Available in</label><select id="f-metal" name="metal"></select></div>
+        <div class="field"><label for="f-price">Price</label><select id="f-price" name="price"></select></div>
+        <div class="field"><label for="f-occasion">Occasion</label><select id="f-occasion" name="occasion"></select></div>
+        <div class="field"><label for="f-sort">Sort</label>
+          <select id="f-sort" name="sort">
+            <option value="">Recommended</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
+        </div>
+        <button class="btn btn-outline btn-sm" type="reset">Clear</button>
+      </form>
+      <div class="results-bar"><span id="shop-count" aria-live="polite"></span><span>All prices include GST</span></div>
+      <div class="grid g4 products" id="shop-grid"></div>
+    </div>
+  </section>
+
+  <section class="section center">
+    <div class="wrap">
+      <span class="eyebrow">Can't find it?</span>
+      <h2>We source and make to order.</h2>
+      <p class="lead">Share a photo, a budget or an idea. We'll come back with options and a written quote.</p>
+      <div class="btn-row" style="justify-content:center"><a class="btn btn-gold" href="consultation.html">Request a custom piece</a></div>
+    </div>
+  </section>
+
+</main>
+<div id="site-footer"></div>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/products.js"></script>
+<script src="assets/js/pricing.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
