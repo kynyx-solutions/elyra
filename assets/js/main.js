@@ -45,6 +45,12 @@
   var DIAMOND = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 10h36l10 14-28 32L4 24z"/><path d="M4 24h56M24 10l-6 14 14 32 14-32-6-14M18 24l6-14M46 24l-6-14"/></svg>';
   var WA_ICON = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.5.7 4.8 2 6.8L3 29l6.8-2.2c1.9 1 4 1.6 6.2 1.6 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.1c-2 0-3.9-.5-5.5-1.5l-.4-.2-4 1.3 1.3-3.9-.3-.4c-1.1-1.7-1.7-3.7-1.7-5.8C5.4 9.8 10.2 5 16 5s10.6 4.8 10.6 10.6S21.8 26.1 16 26.1zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.6-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.7 5 .8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>';
 
+  var SOCIAL = {
+    instagram: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 4.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-9.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></svg>',
+    facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21.9v-7.6h2.6l.4-3h-3V9.4c0-.9.3-1.5 1.5-1.5h1.6V5.2c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6v7.6C5.5 21.2 2 17 2 12 2 6.5 6.5 2 12 2s10 4.5 10 10c0 5-3.6 9.2-8.5 9.9z"/></svg>',
+    google: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 10.2H12v3.9h5.5c-.5 2.5-2.6 3.9-5.5 3.9a6 6 0 1 1 3.9-10.6l2.9-2.9A10 10 0 1 0 12 22c5.8 0 9.8-4.1 9.8-9.8 0-.7-.1-1.4-.2-2z"/></svg>'
+  };
+
   /* ---------- helpers ---------- */
   function get(key) { return C[key]; }
   function esc(s) {
@@ -102,15 +108,23 @@
           '<li><span data-cfg="address"></span></li>' +
           '<li><a data-cfg-href="phone" data-cfg="phone" href="#"></a>' + (C.phoneAlt ? ' · <a data-cfg-href="phoneAlt" data-cfg="phoneAlt" href="#"></a>' : "") + "</li>" +
           '<li><a data-cfg-href="email" data-cfg="email" href="#"></a></li>' +
-          '<li class="muted" data-cfg="hours"></li>' +
         "</ul>" +
-        '<p class="social"><a data-cfg-href="instagram" href="#" target="_blank" rel="noopener">Instagram</a> · <a data-cfg-href="facebook" href="#" target="_blank" rel="noopener">Facebook</a> · <a data-cfg-href="googleReviewsUrl" href="#" target="_blank" rel="noopener">Google</a></p></div>' +
+        "</div>" +
         "<div><h4>Shop</h4><ul>" + shop + "</ul></div>" +
         '<div><h4>Help</h4><ul><li><a href="custom.html">You dream it, we create it</a></li><li><a href="consultation.html">Book a consultation</a></li><li><a href="faq.html">FAQ</a></li><li><a href="shipping.html">Shipping & delivery</a></li><li><a href="returns.html">Returns & refunds</a></li><li><a href="exchange-buyback.html">Exchange & buyback</a></li><li><a href="certification.html">Certification & hallmarking</a></li></ul></div>' +
         '<div><h4>Company</h4><ul><li><a href="about.html">About Elyra</a></li><li><a href="learn.html">Diamond guide</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li><li><a href="privacy.html">Privacy policy</a></li><li><a href="terms.html">Terms of use & sale</a></li><li><a href="grievance.html">Grievance redressal</a></li></ul></div>' +
       "</div>" +
       '<p class="disclosure">Every diamond sold by Elyra is clearly identified as natural or laboratory-grown on its listing, quote, certificate and invoice. Our natural diamonds are ethically sourced under the Kimberley Process.</p>' +
-      '<div class="ftr-legal"><span>© <span data-year></span> <span data-cfg="legalName"></span>. All rights reserved.</span><span data-requires="gstin">GSTIN: <span data-cfg="gstin"></span></span></div>' +
+      '<div class="ftr-legal">' +
+        '<div class="ftr-copy">© <span data-year></span> <span data-cfg="legalName"></span>. All rights reserved.<span data-requires="gstin"> GSTIN: <span data-cfg="gstin"></span></span></div>' +
+        '<div class="ftr-social">' +
+          '<a data-cfg-href="instagram" href="#" target="_blank" rel="noopener" aria-label="Elyra on Instagram">' + SOCIAL.instagram + "</a>" +
+          '<a data-cfg-href="facebook" href="#" target="_blank" rel="noopener" aria-label="Elyra on Facebook">' + SOCIAL.facebook + "</a>" +
+          '<a data-cfg-href="googleReviewsUrl" href="#" target="_blank" rel="noopener" aria-label="Elyra reviews on Google">' + SOCIAL.google + "</a>" +
+          '<a href="#" data-wa="Hi Elyra, I have a question." aria-label="Chat with Elyra on WhatsApp">' + WA_ICON + "</a>" +
+        "</div>" +
+        '<div class="ftr-credit">Made in <span aria-label="love">❤️</span> by <a href="https://kynyx.com" target="_blank" rel="noopener">Kynyx</a></div>' +
+      "</div>" +
       "</div></footer>" +
       '<a class="wa-float" href="#" data-wa="Hi Elyra, I have a question." aria-label="Chat with Elyra on WhatsApp">' + WA_ICON + "</a>";
   }
