@@ -106,8 +106,6 @@
         '<p class="muted" style="margin-top:18px">Bespoke diamond jewellery, natural or lab-grown, from a family of gem merchants four generations strong. Forever, for everyone.</p>' +
         '<ul class="ftr-contact">' +
           '<li><span data-cfg="address"></span></li>' +
-          '<li><a data-cfg-href="phone" data-cfg="phone" href="#"></a>' + (C.phoneAlt ? ' · <a data-cfg-href="phoneAlt" data-cfg="phoneAlt" href="#"></a>' : "") + "</li>" +
-          '<li><a data-cfg-href="email" data-cfg="email" href="#"></a></li>' +
         "</ul>" +
         "</div>" +
         "<div><h4>Shop</h4><ul>" + shop + "</ul></div>" +
