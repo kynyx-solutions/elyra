@@ -156,13 +156,16 @@
     return '<div class="ph" role="img" aria-label="Photo coming soon">' + DIAMOND + "<span>" + esc(text || "Photo coming soon") + "</span></div>";
   }
   function media(p, i) {
-    var src = p.images && p.images[i || 0];
+    // optional third argument: a selection, to show that metal/colour's photo
+    var sel = arguments[2], ci = p.colourImages || {};
+    var list = (sel && (ci[sel.metal + ":" + sel.colour] || ci[sel.metal])) || p.images;
+    var src = list && list[i || 0];
     return src ? '<img src="' + esc(src) + '" alt="' + esc(p.name) + '" loading="lazy">' : placeholder();
   }
   function card(p) {
     var d = normalise(p, defaultsOf(p));
     return '<a class="pcard" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
-      '<div class="pcard-media">' + media(p) + (p.status === "sold_out" ? '<span class="badge">Sold out: made to order</span>' : p.sample && C.showSampleBadges ? '<span class="badge">Sample listing</span>' : "") + "</div>" +
+      '<div class="pcard-media">' + media(p, 0, d) + (p.status === "sold_out" ? '<span class="badge">Sold out: made to order</span>' : p.sample && C.showSampleBadges ? '<span class="badge">Sample listing</span>' : "") + "</div>" +
       '<div class="pcard-body"><div class="pcard-cat">' + esc(CATEGORIES[p.category] || "") + "</div>" +
       "<h3>" + esc(p.name) + "</h3>" +
       '<p class="pcard-meta">' + esc(metalLabel(d)) + "<br>" + esc(caratLabel(p, d.carat)) + " " + esc(PR.stones[d.stone].short.toLowerCase()) + " diamond</p>" +

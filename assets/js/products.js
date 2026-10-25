@@ -43,6 +43,7 @@ window.ELYRA_PRODUCTS = [
     engraving: true,
     images: ["assets/img/catalog/rings/rings-10.jpg", "assets/img/catalog/rings/rings-13.jpg"],
     description: "A single certified solitaire held in a slim four-prong setting. Quiet, classic and made to be worn every day after the proposal.",
+    colourImages: {"platinum": ["assets/img/products/ELR-R001/platinum.jpg"], "gold:Rose": ["assets/img/products/ELR-R001/rose.jpg"], "silver:Rose (gold-plated)": ["assets/img/products/ELR-R001/rose.jpg"], "gold:White": ["assets/img/products/ELR-R001/white.jpg"], "silver:White (rhodium)": ["assets/img/products/ELR-R001/white.jpg"]},
     custom: {
       stones: "centre", carats: [0.30, 0.40, 0.50, 0.70, 0.90, 1.00, 1.50, 2.00], accentCarat: 0, baseWeight: 3.0,
       metals: ["gold", "platinum", "silver"],
@@ -63,6 +64,7 @@ window.ELYRA_PRODUCTS = [
     engraving: true,
     images: ["assets/img/catalog/rings/rings-11.jpg"],
     description: "A cluster of diamonds that reads as one large stone, paired with a matching contoured band.",
+    colourImages: {"platinum": ["assets/img/products/ELR-R002/platinum.jpg"], "gold:Rose": ["assets/img/products/ELR-R002/rose.jpg"], "silver:Rose (gold-plated)": ["assets/img/products/ELR-R002/rose.jpg"], "gold:White": ["assets/img/products/ELR-R002/white.jpg"], "silver:White (rhodium)": ["assets/img/products/ELR-R002/white.jpg"]},
     custom: {
       stones: "accent", carats: [0.50, 0.75, 1.00], baseWeight: 4.2,
       metals: ["gold", "platinum", "silver"],
@@ -83,6 +85,7 @@ window.ELYRA_PRODUCTS = [
     engraving: true,
     images: ["assets/img/catalog/rings/rings-05.jpg"],
     description: "Matched diamonds set all the way around the band. Made to your exact size.",
+    colourImages: {"platinum": ["assets/img/products/ELR-R003/platinum.jpg"], "gold:Rose": ["assets/img/products/ELR-R003/rose.jpg"], "silver:Rose (gold-plated)": ["assets/img/products/ELR-R003/rose.jpg"], "gold:White": ["assets/img/products/ELR-R003/white.jpg"], "silver:White (rhodium)": ["assets/img/products/ELR-R003/white.jpg"]},
     custom: {
       stones: "accent", carats: [0.50, 1.00, 1.50, 2.00], baseWeight: 3.4,
       metals: ["gold", "platinum", "silver"],
@@ -121,6 +124,7 @@ window.ELYRA_PRODUCTS = [
     size: "Screw-back fitting",
     images: ["assets/img/catalog/earrings/earrings-04.jpg", "assets/img/catalog/earrings/earrings-03.jpg"],
     description: "A round diamond cradled in an open heart of gold. A thoughtful gift that is easy to wear every day.",
+    colourImages: {"platinum": ["assets/img/products/ELR-E002/platinum.jpg"], "gold:White": ["assets/img/products/ELR-E002/white.jpg"], "silver:White (rhodium)": ["assets/img/products/ELR-E002/white.jpg"], "gold:Yellow": ["assets/img/products/ELR-E002/yellow.jpg"], "silver:Yellow (gold-plated)": ["assets/img/products/ELR-E002/yellow.jpg"]},
     custom: {
       stones: "centre", pair: true, carats: [0.20, 0.30, 0.50, 0.70], accentCarat: 0, baseWeight: 2.9,
       metals: ["gold", "platinum", "silver"],
@@ -140,6 +144,7 @@ window.ELYRA_PRODUCTS = [
     size: "16–18 inch adjustable chain",
     images: ["assets/img/catalog/necklaces/necklaces-01.jpg"],
     description: "An open heart accented with diamonds, on a fine adjustable chain.",
+    colourImages: {"platinum": ["assets/img/products/ELR-P002/platinum.jpg"], "gold:Rose": ["assets/img/products/ELR-P002/rose.jpg"], "silver:Rose (gold-plated)": ["assets/img/products/ELR-P002/rose.jpg"], "gold:White": ["assets/img/products/ELR-P002/white.jpg"], "silver:White (rhodium)": ["assets/img/products/ELR-P002/white.jpg"]},
     custom: {
       stones: "accent", carats: [0.05, 0.08, 0.15], baseWeight: 1.9,
       metals: ["gold", "platinum", "silver"],
@@ -178,6 +183,7 @@ window.ELYRA_PRODUCTS = [
     size: "Necklace and earrings; adjustable length",
     images: ["assets/img/catalog/necklaces/necklaces-03.jpg", "assets/img/catalog/necklaces/necklaces-02.jpg"],
     description: "A bridal necklace and earring set, made to order. Design changes are discussed during your bridal consultation.",
+    colourImages: {"platinum": ["assets/img/products/ELR-BR01/platinum.jpg"], "gold:Rose": ["assets/img/products/ELR-BR01/rose.jpg"], "gold:White": ["assets/img/products/ELR-BR01/white.jpg"]},
     custom: {
       stones: "accent", carats: [3.00, 4.50, 6.00], baseWeight: 32,
       metals: ["gold", "platinum"],
@@ -197,6 +203,7 @@ window.ELYRA_PRODUCTS = [
     size: "18 inch chain with black beads",
     images: ["assets/img/catalog/mangalsutra/mangalsutra-02.jpg", "assets/img/catalog/mangalsutra/mangalsutra-16.jpg"],
     description: "A modern, light mangalsutra with a diamond pendant, made for daily wear.",
+    colourImages: {"gold:Rose": ["assets/img/products/ELR-M001/rose.jpg"], "gold:White": ["assets/img/products/ELR-M001/white.jpg"]},
     custom: {
       stones: "accent", carats: [0.15, 0.25, 0.40], baseWeight: 4.5,
       metals: ["gold"],
