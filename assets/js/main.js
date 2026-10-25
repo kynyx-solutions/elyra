@@ -114,7 +114,7 @@
         '<div><h4>Help</h4><ul><li><a href="custom.html">You dream it, we create it</a></li><li><a href="consultation.html">Book a consultation</a></li><li><a href="faq.html">FAQ</a></li><li><a href="shipping.html">Shipping & delivery</a></li><li><a href="returns.html">Returns & refunds</a></li><li><a href="exchange-buyback.html">Exchange & buyback</a></li><li><a href="certification.html">Certification & hallmarking</a></li></ul></div>' +
         '<div><h4>Company</h4><ul><li><a href="about.html">About Elyra</a></li><li><a href="learn.html">Diamond guide</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li><li><a href="privacy.html">Privacy policy</a></li><li><a href="terms.html">Terms of use & sale</a></li><li><a href="grievance.html">Grievance redressal</a></li></ul></div>' +
       "</div>" +
-      '<p class="disclosure">Every diamond sold by Elyra is clearly identified as natural or laboratory-grown on its listing, quote, certificate and invoice. Our natural diamonds are ethically sourced under the Kimberley Process.</p>' +
+      '<p class="disclosure">Every Elyra diamond is identified as natural or lab-grown on its listing, certificate and invoice · Natural diamonds ethically sourced under the Kimberley Process</p>' +
       '<div class="ftr-legal">' +
         '<div class="ftr-copy">© <span data-year></span> <span data-cfg="legalName"></span>. All rights reserved.<span data-requires="gstin"> GSTIN: <span data-cfg="gstin"></span></span></div>' +
         '<div class="ftr-social">' +
