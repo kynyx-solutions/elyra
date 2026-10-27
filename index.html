@@ -46,7 +46,7 @@
         <p class="tagline">Elyra · Forever, for everyone</p>
       </div>
       <div class="hero-media">
-        <img src="assets/img/catalog/earrings/earrings-02.jpg" alt="Diamond stud earrings from Elyra on a black background">
+        <img data-home="hero" src="assets/img/catalog/earrings/earrings-02.jpg" alt="Diamond stud earrings from Elyra on a black background">
 
       </div>
     </div>
@@ -88,7 +88,7 @@
         <span class="eyebrow">Shop by category</span>
         <h2>A piece for every story and every milestone.</h2>
       </div>
-      <div class="grid g4">
+      <div class="grid g4" data-home-categories>
         <a class="cat" href="shop.html?category=rings"><img src="assets/img/catalog/rings/rings-13.jpg" alt="Diamond and gemstone rings worn on the hand" loading="lazy"><div class="cat-label"><small>Engagement · everyday</small>Rings</div></a>
         <a class="cat" href="shop.html?category=earrings"><img src="assets/img/catalog/earrings/earrings-04.jpg" alt="Rose gold heart diamond earrings" loading="lazy"><div class="cat-label"><small>Studs · drops</small>Earrings</div></a>
         <a class="cat" href="shop.html?category=pendants"><img src="assets/img/catalog/necklaces/necklaces-04.jpg" alt="Diamond line necklace" loading="lazy"><div class="cat-label"><small>Solitaires · sets</small>Pendants &amp; Necklaces</div></a>
@@ -121,7 +121,7 @@
         <h2>Designs our customers ask about.</h2>
         <p class="lead">Tap any design to ask for price, availability or a custom version on WhatsApp.</p>
       </div>
-      <div class="gallery">
+      <div class="gallery" data-home-gallery>
         <a href="#" data-wa="Hi Elyra, I'm interested in design G01 from your website."><img src="assets/img/catalog/bangles/bangles-03.jpg" alt="Gold bangles with diamond accents" loading="lazy"><span>G01</span></a>
         <a href="#" data-wa="Hi Elyra, I'm interested in design G02 from your website."><img src="assets/img/catalog/bangles/bangles-06.jpg" alt="Gold and diamond bangles" loading="lazy"><span>G02</span></a>
         <a href="#" data-wa="Hi Elyra, I'm interested in design G03 from your website."><img src="assets/img/catalog/mangalsutra/mangalsutra-07.jpg" alt="Solitaire mangalsutra worn" loading="lazy"><span>G03</span></a>
@@ -147,7 +147,7 @@
           <a class="btn btn-outline" href="#" data-wa="Hi Elyra, I have a photo of a design I'd like you to create. I'm attaching it here.">WhatsApp a photo</a>
         </div>
       </div>
-      <div class="portrait"><img src="assets/img/catalog/bangles/bangles-21.jpg" alt="A bespoke diamond bangle held in hand" loading="lazy"></div>
+      <div class="portrait"><img data-home="bespoke" src="assets/img/catalog/bangles/bangles-21.jpg" alt="A bespoke diamond bangle held in hand" loading="lazy"></div>
     </div>
   </section>
 
@@ -202,7 +202,7 @@
   <!-- 7. BRIDAL -->
   <section class="section">
     <div class="wrap split">
-      <div class="portrait"><img src="assets/img/catalog/necklaces/necklaces-02.jpg" alt="Diamond choker and layered bridal necklace" loading="lazy"></div>
+      <div class="portrait"><img data-home="bridal" src="assets/img/catalog/necklaces/necklaces-02.jpg" alt="Diamond choker and layered bridal necklace" loading="lazy"></div>
       <div>
         <span class="eyebrow">Wedding &amp; bridal</span>
         <h2>Your wedding jewellery, planned with you.</h2>
@@ -251,8 +251,8 @@
     </div>
   </section>
 
-  <!-- 10. REVIEWS: rating from our Google Business Profile.
-       To show review quotes, add real ones (copied from Google, with first name) to "reviews" in config.js. -->
+  <!-- 10. REVIEWS: rating from our Google Business Profile. Review quotes (with optional photos) are
+       added in the admin dashboard under Reviews and slide in a continuous loop. -->
   <section class="section paper">
     <div class="wrap">
       <div class="section-head center">
@@ -268,7 +268,7 @@
           <a class="btn btn-outline" data-cfg-href="googleReviewsUrl" href="#" target="_blank" rel="noopener">Write a review</a>
         </div>
       </div>
-      <div class="grid g3" id="review-list" style="margin-top:32px"></div>
+      <div class="review-slider" id="review-list"></div>
     </div>
   </section>
 
@@ -291,6 +291,7 @@
 <script src="assets/js/products.js"></script>
 <script src="assets/js/pricing.js"></script>
 <script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/home-defaults.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/main.js"></script>
 </body>

@@ -16,6 +16,7 @@ h1 { font-size: 1.7rem; } h2 { font-size: 1.25rem; } h3 { font-size: 1.05rem; }
 code { background: #f0ebe2; padding: 1px 6px; border-radius: 4px; font-size: .9em; }
 .boot, .loading { padding: 40px; color: var(--muted); }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+[hidden] { display: none !important; }
 
 /* auth screens */
 .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(ellipse at 70% 20%, rgba(201,161,74,.18), transparent 55%), var(--black); }
@@ -140,6 +141,20 @@ td.num, th.num { text-align: right; white-space: nowrap; }
 .colour-slot-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .colour-slot-head .muted { margin-left: auto; }
 .swatch { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); flex: none; }
+.img-tile.is-on img { border: 2px solid var(--gold); }
+.img-tile.is-default { opacity: .75; }
+.img-tile .check { font-size: .82rem; margin-right: auto; }
+.ann-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto auto auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+@media (max-width: 760px) { .ann-row { grid-template-columns: 1fr 1fr; } .ann-row input[data-k="text"] { grid-column: 1 / -1; } }
+.cat-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.cat-slot { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); background: #fcfaf6; }
+.cat-slot img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
+.cat-slot .row { margin-top: 6px; gap: 6px; }
+.feat-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.feat-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; }
+.feat-item.is-on { border-color: var(--gold); background: #fffaf0; }
+.feat-item img, .feat-item .thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: none; background: #f3efe8; }
+.save-bar { position: sticky; bottom: 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; margin-top: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 -6px 20px rgba(0,0,0,.06); z-index: 5; }
 .cover-preview { max-width: 320px; border-radius: 10px; border: 1px solid var(--line); display: block; margin-bottom: 8px; }
 
 /* editor */

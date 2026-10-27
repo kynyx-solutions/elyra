@@ -45,7 +45,7 @@
     return Promise.all([
       client.from("products").select("*").order("sort").order("name"),
       client.from("settings").select("key,value"),
-      client.from("reviews").select("name,city,text,stars,source").order("sort").order("created_at", { ascending: false }).limit(6)
+      client.from("reviews").select("*").order("sort").order("created_at", { ascending: false })
     ]).then(function (res) {
       var products = res[0], settings = res[1], reviews = res[2];
       if (!products.error && products.data && products.data.length) {
@@ -55,6 +55,7 @@
         settings.data.forEach(function (s) {
           if (s.key === "site") Object.assign(window.ELYRA, s.value);
           if (s.key === "pricing") window.ELYRA_PRICING = Object.assign({}, window.ELYRA_PRICING, s.value);
+          if (s.key === "home") window.ELYRA_HOME = s.value;
         });
       }
       if (!reviews.error && reviews.data) window.ELYRA.reviews = reviews.data;

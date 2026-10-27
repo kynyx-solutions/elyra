@@ -118,12 +118,13 @@ create table if not exists public.reviews (
   source text not null default 'Google',
   published boolean not null default true,
   sort integer not null default 100,
+  images text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 
 -- ---------- site settings, rates, alerts ----------
 create table if not exists public.settings (
-  key text primary key check (key in ('site','pricing','alerts')),
+  key text primary key check (key in ('site','pricing','alerts','home')),
   value jsonb not null,
   updated_at timestamptz not null default now()
 );
@@ -253,14 +254,14 @@ create policy reviews_public_read on public.reviews for select using (published 
 drop policy if exists reviews_admin_write on public.reviews;
 create policy reviews_admin_write on public.reviews for all using (public.is_admin()) with check (public.is_admin());
 
--- settings: site + pricing are public; alerts are private.
--- Any admin can update rates; only the owner can change site settings and alerts.
+-- settings: site, pricing and home (notification bar, homepage images) are public; alerts are private.
+-- Any admin can update rates and homepage content; only the owner can change site settings and alerts.
 drop policy if exists settings_read on public.settings;
-create policy settings_read on public.settings for select using (key in ('site','pricing') or public.is_admin());
+create policy settings_read on public.settings for select using (key in ('site','pricing','home') or public.is_admin());
 drop policy if exists settings_insert on public.settings;
-create policy settings_insert on public.settings for insert with check (public.is_owner() or (key = 'pricing' and public.is_admin()));
+create policy settings_insert on public.settings for insert with check (public.is_owner() or (key in ('pricing','home') and public.is_admin()));
 drop policy if exists settings_update on public.settings;
-create policy settings_update on public.settings for update using (public.is_owner() or (key = 'pricing' and public.is_admin())) with check (public.is_owner() or (key = 'pricing' and public.is_admin()));
+create policy settings_update on public.settings for update using (public.is_owner() or (key in ('pricing','home') and public.is_admin())) with check (public.is_owner() or (key in ('pricing','home') and public.is_admin()));
 
 -- customers & orders: admins only
 drop policy if exists customers_admin on public.customers;

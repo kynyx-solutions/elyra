@@ -588,17 +588,73 @@
   }
 
   /* ---------- forms → WhatsApp ---------- */
+  // Customer stories slide in a continuous loop; the list is repeated once so the loop is seamless
   function renderReviews() {
     var el = document.getElementById("review-list");
     if (!el) return;
     var list = (C.reviews || []).filter(function (r) { return r && r.text; });
     el.hidden = !list.length;
-    el.innerHTML = list.map(function (r) {
-      var n = Math.max(1, Math.min(5, r.stars || 5));
-      return '<figure class="card review-card"><div class="rating-stars" aria-label="' + n + ' out of 5 stars">' + "★★★★★".slice(0, n) + "</div>" +
-        "<blockquote><p>“" + esc(r.text) + "”</p></blockquote><figcaption><cite>" + esc(r.name || "Customer") + "</cite>" +
-        (r.city ? ", " + esc(r.city) : "") + " · " + esc(r.source || "Google") + " review</figcaption></figure>";
-    }).join("");
+    var cards = function (copy) {
+      return list.map(function (r) {
+        var n = Math.max(1, Math.min(5, r.stars || 5));
+        var photos = (r.images || []).filter(Boolean);
+        return '<figure class="card review-card"' + (copy ? ' aria-hidden="true"' : "") + '><div class="rating-stars" aria-label="' + n + ' out of 5 stars">' + "★★★★★".slice(0, n) + "</div>" +
+          (photos.length ? '<div class="review-photos">' + photos.map(function (src) {
+            return '<a href="' + esc(src) + '" target="_blank" rel="noopener"' + (copy ? ' tabindex="-1"' : "") + '><img src="' + esc(src) + '" alt="Photo shared by ' + esc(r.name || "a customer") + '" loading="lazy"></a>';
+          }).join("") + "</div>" : "") +
+          "<blockquote><p>“" + esc(r.text) + "”</p></blockquote><figcaption><cite>" + esc(r.name || "Customer") + "</cite>" +
+          (r.city ? ", " + esc(r.city) : "") + " · " + esc(r.source || "Google") + " review</figcaption></figure>";
+      }).join("");
+    };
+    var loop = list.length > 2;
+    el.classList.toggle("is-static", !loop);
+    el.innerHTML = '<div class="review-track"' + (loop ? ' style="animation-duration:' + list.length * 7 + 's"' : "") + ">" + cards(false) + (loop ? cards(true) : "") + "</div>";
+  }
+
+  /* ---------- notification bar (admin → Homepage) ---------- */
+  function renderAnnouncement() {
+    var a = (window.ELYRA_HOME || {}).announce || {};
+    var items = (a.items || []).filter(function (x) { return x && x.on !== false && x.text; });
+    var header = document.querySelector(".site-header");
+    if (!a.enabled || !items.length || !header || document.querySelector(".announce")) return;
+    var list = function (copy) {
+      return items.map(function (x) {
+        var t = esc(x.text);
+        var link = x.link && !/^\s*(javascript|data):/i.test(x.link) ? x.link : "";
+        return "<li" + (copy ? ' aria-hidden="true"' : "") + ">" + (link ? '<a href="' + esc(link) + '"' + (copy ? ' tabindex="-1"' : "") + ">" + t + "</a>" : t) + "</li>";
+      }).join("");
+    };
+    var bar = document.createElement("div");
+    bar.className = "announce";
+    bar.setAttribute("role", "region");
+    bar.setAttribute("aria-label", "Latest offers and news");
+    // repeated so the strip never runs out while it scrolls
+    bar.innerHTML = '<div class="marquee"><ul class="announce-track" style="animation-duration:' + Math.max(20, items.length * 12) + 's">' +
+      list(false) + list(true) + list(true) + list(true) + "</ul></div>";
+    header.parentNode.insertBefore(bar, header);
+  }
+
+  /* ---------- homepage images (admin → Homepage) ---------- */
+  function applyHome() {
+    var home = window.ELYRA_HOME, D = window.ELYRA_HOME_DEFAULTS;
+    if (!home || !D) return;
+    var chosen = function (key) {
+      return ((home.sections || {})[key] || []).filter(function (x) { return x && x.on && x.url; })
+        .map(function (x) { return x.url; }).slice(0, D.sections[key].max);
+    };
+    ["hero", "bespoke", "bridal"].forEach(function (key) {
+      var img = document.querySelector('img[data-home="' + key + '"]'), list = chosen(key);
+      if (img && list.length) { img.src = list[0]; img.alt = D.sections[key].alt; }
+    });
+    var gallery = document.querySelector("[data-home-gallery]"), g = chosen("gallery");
+    if (gallery && g.length) {
+      gallery.innerHTML = g.map(function (src, i) {
+        var code = "G" + String(i + 1).padStart(2, "0");
+        return '<a href="#" data-wa="Hi Elyra, I\'m interested in design ' + code + ' from your website."><img src="' + esc(src) + '" alt="' + esc(D.sections.gallery.alt + " " + code) + '" loading="lazy"><span>' + code + "</span></a>";
+      }).join("");
+    }
+    var cats = document.querySelectorAll("[data-home-categories] .cat img");
+    (home.categories || []).forEach(function (src, i) { if (src && cats[i]) cats[i].src = src; });
   }
 
   /* ---------- leads → database (when Supabase is connected) ---------- */
@@ -802,6 +858,8 @@
     initShop();
     initProduct();
     initPolicyNav();
+    renderAnnouncement();
+    applyHome();
     renderReviews();
     initBlog();
     applyConfig(document);

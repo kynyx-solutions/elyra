@@ -112,7 +112,34 @@
   const staffName = (list, id) => { const s = list.find((x) => x.id === id); return s ? (s.full_name || s.email) : ""; };
   const isOwner = () => me && me.profile && me.profile.role === "owner";
 
-  async function uploadMedia(folder, file) {
+  // Shrink photos before upload: longest side at most maxSize px, saved as WebP (JPEG where the browser
+  // can't make WebP). GIFs and files the browser can't read are uploaded as they are.
+  async function compressImage(file, maxSize) {
+    if (!/^image\/(jpeg|png|webp|avif|bmp)$/.test(file.type)) return file;
+    let bmp;
+    try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); } catch (err) { return file; }
+    const scale = Math.min(1, maxSize / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const offscreen = typeof OffscreenCanvas !== "undefined";
+    const canvas = offscreen ? new OffscreenCanvas(w, h) : Object.assign(document.createElement("canvas"), { width: w, height: h });
+    const ctx = canvas.getContext("2d");
+    const encode = (type) => offscreen ? canvas.convertToBlob({ type, quality: 0.82 }).catch(() => null) : new Promise((resolve) => canvas.toBlob(resolve, type, 0.82));
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    let blob = await encode("image/webp");
+    if (!blob || blob.type !== "image/webp") {
+      // JPEG has no transparency: put PNG cut-outs on white
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+      blob = await encode("image/jpeg");
+    }
+    if (bmp.close) bmp.close();
+    if (!blob || (scale === 1 && blob.size >= file.size)) return file;
+    const ext = blob.type === "image/webp" ? "webp" : "jpg";
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + "." + ext, { type: blob.type });
+  }
+
+  async function uploadMedia(folder, original, maxSize = 1600) {
+    const file = await compressImage(original, maxSize);
     const path = `${folder}/${Date.now()}-${safeName(file)}`;
     const { error } = await db.storage.from("media").upload(path, file, { contentType: file.type, upsert: false });
     if (failed(error, "Upload")) return null;
@@ -206,7 +233,7 @@
   /* ---------- shell & routing ---------- */
   const NAV = [
     ["dashboard", "Dashboard"], ["leads", "Leads"], ["customers", "Customers"], ["orders", "Orders"],
-    ["products", "Products"], ["blog", "Blog"], ["reviews", "Reviews"], ["settings", "Rates & settings"],
+    ["products", "Products"], ["homepage", "Homepage"], ["blog", "Blog"], ["reviews", "Reviews"], ["settings", "Rates & settings"],
     ["staff", "Staff", true], ["account", "My account"]
   ];
   const SECTION = { lead: "leads", customer: "customers", order: "orders", product: "products", post: "blog" };
@@ -813,6 +840,10 @@
       const metalsOn = $$("[data-metal]", main).filter((x) => x.checked).map((x) => x.dataset.metal);
       if (!carats.length) return toast("Add at least one carat choice.", "error");
       if (!metalsOn.length) return toast("Choose at least one metal.", "error");
+      if (f.featured && !p.featured) {
+        const { count } = await db.from("products").select("id", { count: "exact", head: true }).eq("featured", true).neq("id", p.id || f.id);
+        if (count >= HOME.featuredMax) return toast(maxMsg("Featured pieces", HOME.featuredMax, "product") + " Change it under Homepage.", "error");
+      }
       const colourPhotos = Object.fromEntries(Object.entries(colourImages).filter(([, list]) => list && list.length));
       const defCarat = carats.includes(f.d_carat) ? f.d_carat : carats[0];
       const row = {
@@ -844,6 +875,168 @@
       delete copy.created_at; delete copy.updated_at;
       const { error } = await db.from("products").insert(copy);
       if (!failed(error, "Duplicate")) { toast("Copy created (hidden)."); location.hash = "#/product/" + encodeURIComponent(newId); }
+    });
+  };
+
+  /* ---------- homepage: notification bar, section images, featured pieces ---------- */
+  const HOME = window.ELYRA_HOME_DEFAULTS || { sections: {}, categories: [], featuredMax: 4, reviewPhotosMax: 3 };
+  const mediaPath = (url) => { const m = String(url || "").match(/\/storage\/v1\/object\/public\/media\/(.+)$/); return m ? decodeURIComponent(m[1]) : null; };
+  const maxMsg = (label, max, what = "image") => `"${label}" already has the maximum of ${max} ${what}${max > 1 ? "s" : ""} selected. Untick one first to add a new ${what}.`;
+
+  views.homepage = async (main) => {
+    const [saved, prodRes] = await Promise.all([getSetting("home"), db.from("products").select("id,name,images,featured,status").order("sort").order("name")]);
+    if (failed(prodRes.error, "Products")) return;
+    const home = JSON.parse(JSON.stringify(saved || {}));
+    home.announce = Object.assign({ enabled: false, items: [] }, home.announce);
+    home.sections = home.sections || {};
+    Object.keys(HOME.sections).forEach((k) => { home.sections[k] = home.sections[k] || []; });
+    home.categories = HOME.categories.map((_, i) => (home.categories || [])[i] || null);
+    const products = prodRes.data || [];
+    const toDelete = new Set();   // storage files removed once the page is saved
+    const dropFile = (url) => { if (mediaPath(url)) toDelete.add(mediaPath(url)); };
+
+    main.innerHTML = `
+      <div class="page-head"><div><h1>Homepage</h1><p>Notification bar, section photos and featured pieces. Photos are compressed automatically when uploaded.</p></div>
+        <a class="btn" href="${SITE}index.html" target="_blank" rel="noopener">View homepage ↗</a></div>
+      <div class="panel form"><h2>Notification bar</h2><p class="muted small">A scrolling strip above the menu on every page, for offers and news. Messages can link to a page, e.g. <code>shop.html</code> or a full web address.</p>
+        <label class="check"><input type="checkbox" id="ann-on"${home.announce.enabled ? " checked" : ""}> Show the notification bar</label>
+        <div id="ann-list" style="margin-top:12px"></div>
+        <button class="btn btn-sm" type="button" id="ann-add" style="margin-top:10px">+ Add message</button>
+      </div>
+      <div id="sections"></div>
+      <div class="panel"><h2>Shop by category</h2><p class="muted small">One photo per card. Square or portrait photos (4:5) look best.</p><div class="cat-slots" id="cats"></div></div>
+      <div class="panel"><h2>Featured pieces <span class="muted small" id="feat-count"></span></h2><p class="muted small">Tick up to ${HOME.featuredMax} products to show under "Featured pieces". Changes here save straight away.</p><div id="feat"></div></div>
+      <div class="save-bar"><button class="btn btn-gold" id="save" type="button">Save homepage</button><span class="muted small">Notification bar and photo changes go live when you save.</span></div>`;
+
+    /* notification bar */
+    const annList = $("#ann-list", main);
+    function renderAnn() {
+      annList.innerHTML = home.announce.items.length ? home.announce.items.map((x, i) => `<div class="ann-row" data-i="${i}">
+        <input data-k="text" placeholder="e.g. Diwali offer: free engraving on all rings" value="${esc(x.text)}" maxlength="140">
+        <input data-k="link" placeholder="Link (optional)" value="${esc(x.link || "")}">
+        <label class="check"><input type="checkbox" data-k="on"${x.on !== false ? " checked" : ""}> Show</label>
+        <button class="btn btn-sm" type="button" data-move="-1"${i === 0 ? " disabled" : ""} aria-label="Move up">↑</button>
+        <button class="btn btn-sm" type="button" data-move="1"${i === home.announce.items.length - 1 ? " disabled" : ""} aria-label="Move down">↓</button>
+        <button class="btn btn-sm btn-danger" type="button" data-del aria-label="Delete message">✕</button></div>`).join("") : '<p class="muted small">No messages yet.</p>';
+    }
+    renderAnn();
+    annList.addEventListener("input", (e) => { const row = e.target.closest("[data-i]"); if (!row) return; const x = home.announce.items[row.dataset.i]; x[e.target.dataset.k] = e.target.type === "checkbox" ? e.target.checked : e.target.value; });
+    annList.addEventListener("click", (e) => {
+      const b = e.target.closest("button"), row = e.target.closest("[data-i]");
+      if (!b || !row) return;
+      const i = Number(row.dataset.i), items = home.announce.items;
+      if (b.dataset.del !== undefined) items.splice(i, 1);
+      if (b.dataset.move) { const j = i + Number(b.dataset.move); [items[i], items[j]] = [items[j], items[i]]; }
+      renderAnn();
+    });
+    $("#ann-add", main).addEventListener("click", () => { home.announce.items.push({ text: "", link: "", on: true }); renderAnn(); $("#ann-list .ann-row:last-child input", main).focus(); });
+    $("#ann-on", main).addEventListener("change", (e) => { home.announce.enabled = e.target.checked; });
+
+    /* section photo libraries: upload any number, tick up to the section's maximum */
+    const sectionsEl = $("#sections", main);
+    function renderSections() {
+      sectionsEl.innerHTML = Object.entries(HOME.sections).map(([key, sec]) => {
+        const list = home.sections[key], on = list.filter((x) => x.on).length;
+        return `<div class="panel" data-sec="${key}"><h2>${esc(sec.label)} <span class="muted small">${on} of ${sec.max} selected</span></h2>
+          <p class="muted small">Upload photos, then tick ${sec.max === 1 ? "the one" : `up to ${sec.max}`} to show. ${on ? "" : "Nothing ticked, so the website shows the built-in photo" + (sec.max > 1 ? "s" : "") + "."}</p>
+          <div class="images">${list.map((x, i) => `<div class="img-tile${x.on ? " is-on" : ""}"><img src="${esc(imgUrl(x.url))}" alt="${esc(sec.label)} photo ${i + 1}">
+            <div class="row"><label class="check"><input type="checkbox" data-pick="${i}"${x.on ? " checked" : ""}> Show</label><button class="btn btn-sm btn-danger" type="button" data-remove="${i}" aria-label="Delete photo">✕</button></div></div>`).join("") ||
+            sec.images.map((src) => `<div class="img-tile is-default"><img src="${esc(imgUrl(src))}" alt=""><span class="muted small">Built-in</span></div>`).join("")}</div>
+          <div class="row" style="margin-top:12px"><label class="btn btn-sm">Upload photos<input type="file" data-upload accept="image/*" multiple hidden></label><span class="muted small" data-status></span></div></div>`;
+      }).join("");
+    }
+    renderSections();
+    sectionsEl.addEventListener("change", async (e) => {
+      const panel = e.target.closest("[data-sec]");
+      if (!panel) return;
+      const key = panel.dataset.sec, sec = HOME.sections[key], list = home.sections[key];
+      if (e.target.dataset.pick !== undefined) {
+        const x = list[Number(e.target.dataset.pick)];
+        if (e.target.checked && list.filter((y) => y.on).length >= sec.max) { e.target.checked = false; return toast(maxMsg(sec.label, sec.max), "error"); }
+        x.on = e.target.checked;
+        return renderSections();
+      }
+      if (e.target.dataset.upload !== undefined) {
+        const files = [...e.target.files], status = $("[data-status]", panel);
+        let skipped = 0;
+        for (let i = 0; i < files.length; i++) {
+          status.textContent = `Compressing and uploading ${i + 1} of ${files.length}…`;
+          const url = await uploadMedia("home/" + key, files[i], sec.maxSize);
+          if (!url) continue;
+          const room = list.filter((y) => y.on).length < sec.max;
+          if (!room) skipped++;
+          list.push({ url, on: room });
+        }
+        renderSections();
+        if (skipped) toast(maxMsg(sec.label, sec.max) + ` ${skipped} new photo${skipped > 1 ? "s were" : " was"} uploaded but not ticked.`, "error");
+        else if (files.length) toast("Uploaded. Remember to save.");
+      }
+    });
+    sectionsEl.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-remove]");
+      if (!b) return;
+      const list = home.sections[b.closest("[data-sec]").dataset.sec];
+      if (!confirm("Delete this photo? It is removed from the website when you save.")) return;
+      dropFile(list.splice(Number(b.dataset.remove), 1)[0].url);
+      renderSections();
+    });
+
+    /* category cards: one photo each */
+    const catsEl = $("#cats", main);
+    function renderCats() {
+      catsEl.innerHTML = HOME.categories.map((c, i) => `<div class="cat-slot" data-i="${i}"><img src="${esc(imgUrl(home.categories[i] || c.image))}" alt="${esc(c.label)}">
+        <b>${esc(c.label)}</b><span class="muted small">${home.categories[i] ? "Your photo" : "Built-in photo"}</span>
+        <div class="row"><label class="btn btn-sm">Change<input type="file" data-cat accept="image/*" hidden></label>${home.categories[i] ? '<button class="btn btn-sm btn-danger" type="button" data-reset>Delete</button>' : ""}</div></div>`).join("");
+    }
+    renderCats();
+    catsEl.addEventListener("change", async (e) => {
+      if (e.target.dataset.cat === undefined || !e.target.files[0]) return;
+      const i = Number(e.target.closest("[data-i]").dataset.i);
+      toast("Compressing and uploading…");
+      const url = await uploadMedia("home/categories", e.target.files[0], 1000);
+      if (!url) return;
+      dropFile(home.categories[i]);
+      home.categories[i] = url;
+      renderCats();
+      toast("Uploaded. Remember to save.");
+    });
+    catsEl.addEventListener("click", (e) => {
+      if (!e.target.closest("[data-reset]")) return;
+      const i = Number(e.target.closest("[data-i]").dataset.i);
+      dropFile(home.categories[i]);
+      home.categories[i] = null;
+      renderCats();
+    });
+
+    /* featured products */
+    const featEl = $("#feat", main);
+    function renderFeat() {
+      const n = products.filter((p) => p.featured).length;
+      $("#feat-count", main).textContent = `${n} of ${HOME.featuredMax} selected`;
+      featEl.innerHTML = products.length ? `<div class="feat-list">${products.map((p) => `<label class="feat-item${p.featured ? " is-on" : ""}"><input type="checkbox" data-id="${esc(p.id)}"${p.featured ? " checked" : ""}>
+        ${p.images && p.images[0] ? `<img src="${esc(imgUrl(p.images[0]))}" alt="">` : '<span class="thumb"></span>'}<span><b>${esc(p.name)}</b><br><span class="muted small">${esc(p.id)}${p.status === "hidden" ? " · hidden" : ""}</span></span></label>`).join("")}</div>` : '<p class="muted small">No products yet.</p>';
+    }
+    renderFeat();
+    featEl.addEventListener("change", async (e) => {
+      const p = products.find((x) => x.id === e.target.dataset.id);
+      if (!p) return;
+      if (e.target.checked && products.filter((x) => x.featured).length >= HOME.featuredMax) { e.target.checked = false; return toast(maxMsg("Featured pieces", HOME.featuredMax, "product"), "error"); }
+      const { error } = await db.from("products").update({ featured: e.target.checked }).eq("id", p.id);
+      if (failed(error, "Save")) { e.target.checked = !e.target.checked; return; }
+      p.featured = e.target.checked;
+      renderFeat();
+      toast(p.featured ? `${p.name} is now featured.` : `${p.name} removed from featured.`);
+    });
+
+    $("#save", main).addEventListener("click", async (e) => {
+      home.announce.items = home.announce.items.map((x) => ({ text: (x.text || "").trim(), link: (x.link || "").trim(), on: x.on !== false })).filter((x) => x.text);
+      await busy(e.target, async () => {
+        if (!(await saveSetting("home", home))) return;
+        if (toDelete.size) await db.storage.from("media").remove([...toDelete]);
+        toDelete.clear();
+        toast("Homepage saved. It's live on the website now.");
+        renderAnn();
+      });
     });
   };
 
@@ -935,7 +1128,7 @@
       const file = e.target.files[0];
       if (!file) return;
       toast("Uploading image…");
-      const url = await uploadMedia("blog", file);
+      const url = await uploadMedia("blog", file, 1400);
       if (url) insert(`\n![${file.name.replace(/\.[^.]+$/, "")}](${url})\n`);
       e.target.value = "";
     });
@@ -982,7 +1175,7 @@
     if (failed(error, "Reviews")) return;
     const rows = data || [];
     main.innerHTML = `
-      <div class="page-head"><div><h1>Reviews &amp; testimonials</h1><p>Published reviews appear in "Customer stories" on the home page (up to 6). Only add real reviews, with the customer's permission.</p></div></div>
+      <div class="page-head"><div><h1>Reviews &amp; testimonials</h1><p>Published reviews slide in a loop under "Customer stories" on the home page, in the order set here. Only add real reviews, with the customer's permission.</p></div></div>
       <div class="grid" style="grid-template-columns:minmax(0,3fr) minmax(0,2fr)">
         <div id="list"></div>
         <form class="panel form" id="f"><h2 id="f-title">Add a review</h2><input type="hidden" name="id">
@@ -991,36 +1184,71 @@
           <div class="grid g3"><div class="field"><label>Stars</label><select name="stars">${[5, 4, 3, 2, 1].map((n) => opt(n, "★".repeat(n), 5)).join("")}</select></div>
             <div class="field"><label>Source</label><select name="source">${["Google", "Instagram", "Facebook", "WhatsApp", "In person"].map((s) => opt(s, s, "Google")).join("")}</select></div>
             <div class="field"><label>Order</label><input name="sort" type="number" value="100"></div></div>
+          <div class="field"><label>Photos (optional, up to ${HOME.reviewPhotosMax})</label><div class="images" id="rv-photos"></div>
+            <div class="row" style="margin-top:8px"><label class="btn btn-sm">Add photos<input type="file" id="rv-upload" accept="image/*" multiple hidden></label><span class="muted small" id="rv-status"></span></div>
+            <div class="hint">e.g. the customer wearing the piece. Compressed automatically.</div></div>
           <label class="check"><input type="checkbox" name="published" checked> Show on website</label>
           <div class="row"><button class="btn btn-gold" type="submit">Save review</button><button class="btn" type="reset" id="clear">Clear</button><span class="spacer"></span><button class="btn btn-danger" type="button" id="del" hidden>Delete</button></div>
         </form>
       </div>`;
     const form = $("#f", main);
+    let photos = [];
+    const removed = [];   // storage files of photos taken off a review, deleted when it is saved
+    function renderPhotos() {
+      $("#rv-photos", main).innerHTML = photos.map((src, i) => `<div class="img-tile"><img src="${esc(imgUrl(src))}" alt="Review photo ${i + 1}"><div class="row"><button class="btn btn-sm btn-danger" type="button" data-remove="${i}" aria-label="Remove photo">✕</button></div></div>`).join("");
+    }
+    $("#rv-photos", main).addEventListener("click", (e) => {
+      const b = e.target.closest("[data-remove]");
+      if (!b) return;
+      removed.push(photos.splice(Number(b.dataset.remove), 1)[0]);
+      renderPhotos();
+    });
+    $("#rv-upload", main).addEventListener("change", async (e) => {
+      const files = [...e.target.files];
+      e.target.value = "";
+      const room = HOME.reviewPhotosMax - photos.length;
+      if (files.length > room) toast(maxMsg("This review", HOME.reviewPhotosMax, "photo") + (room > 0 ? ` Only the first ${room} will be added.` : ""), "error");
+      const take = files.slice(0, Math.max(0, room));
+      for (let i = 0; i < take.length; i++) {
+        $("#rv-status", main).textContent = `Compressing and uploading ${i + 1} of ${take.length}…`;
+        const url = await uploadMedia("reviews", take[i], 1000);
+        if (url) photos.push(url);
+      }
+      $("#rv-status", main).textContent = take.length ? "Added. Remember to save." : "";
+      renderPhotos();
+    });
     $("#list", main).innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Review</th><th>Stars</th><th>Shown</th></tr></thead><tbody>
-      ${rows.map((r) => `<tr class="click" data-id="${r.id}"><td><strong>${esc(r.name)}</strong>${r.city ? ", " + esc(r.city) : ""} <span class="muted small">· ${esc(r.source)}</span><br>${esc(r.text.slice(0, 140))}${r.text.length > 140 ? "…" : ""}</td><td>${"★".repeat(r.stars)}</td><td>${r.published ? badge("published", "Yes") : badge("draft", "No")}</td></tr>`).join("")}
+      ${rows.map((r) => `<tr class="click" data-id="${r.id}"><td><strong>${esc(r.name)}</strong>${r.city ? ", " + esc(r.city) : ""} <span class="muted small">· ${esc(r.source)}${(r.images || []).length ? ` · ${r.images.length} photo${r.images.length > 1 ? "s" : ""}` : ""}</span><br>${esc(r.text.slice(0, 140))}${r.text.length > 140 ? "…" : ""}</td><td>${"★".repeat(r.stars)}</td><td>${r.published ? badge("published", "Yes") : badge("draft", "No")}</td></tr>`).join("")}
       </tbody></table></div>` : '<div class="panel empty">No reviews yet. Copy your best Google reviews here.</div>';
     $$("tr.click", main).forEach((tr) => tr.addEventListener("click", () => {
       const r = rows.find((x) => x.id === tr.dataset.id);
       ["id", "name", "city", "text", "stars", "source", "sort"].forEach((k) => { form[k].value = r[k] ?? ""; });
       form.published.checked = r.published;
+      photos = (r.images || []).slice(); removed.length = 0; renderPhotos();
       $("#f-title", main).textContent = "Edit review";
       $("#del", main).hidden = false;
     }));
-    $("#clear", main).addEventListener("click", () => { $("#f-title", main).textContent = "Add a review"; $("#del", main).hidden = true; });
+    $("#clear", main).addEventListener("click", () => { $("#f-title", main).textContent = "Add a review"; $("#del", main).hidden = true; photos = []; removed.length = 0; renderPhotos(); });
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const f = readForm(form);
       const id = f.id; delete f.id;
-      f.stars = Number(f.stars); f.sort = f.sort ?? 100;
+      f.stars = Number(f.stars); f.sort = f.sort ?? 100; f.images = photos;
       await busy($("button[type=submit]", form), async () => {
         const { error } = id ? await db.from("reviews").update(f).eq("id", id) : await db.from("reviews").insert(f);
-        if (!failed(error, "Save")) { toast("Review saved."); route(); }
+        if (failed(error, "Save")) return;
+        const gone = removed.map(mediaPath).filter(Boolean);
+        if (gone.length) await db.storage.from("media").remove(gone);
+        toast("Review saved."); route();
       });
     });
     $("#del", main).addEventListener("click", async () => {
       if (!confirm("Delete this review?")) return;
       const { error } = await db.from("reviews").delete().eq("id", form.id.value);
-      if (!failed(error)) { toast("Review deleted."); route(); }
+      if (failed(error)) return;
+      const gone = photos.concat(removed).map(mediaPath).filter(Boolean);
+      if (gone.length) await db.storage.from("media").remove(gone);
+      toast("Review deleted."); route();
     });
   };
 
