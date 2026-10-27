@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://elyra.kynyx.com/sitemap.xml
+Sitemap: https://elyrashree.com/sitemap.xml

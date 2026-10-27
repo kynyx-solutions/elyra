@@ -346,6 +346,13 @@
     if (!root) return;
     var params = new URLSearchParams(location.search);
     var p = PRODUCTS.filter(function (x) { return x.id === params.get("id"); })[0];
+    // on a slow connection the page may have started from the built-in list; wait for the database before giving up
+    if (!p && window.ElyraDataLoaded && !root.dataset.waited) {
+      root.dataset.waited = "1";
+      root.innerHTML = '<p class="muted" style="padding:40px 0">Loading…</p>';
+      window.ElyraDataLoaded.then(function () { PRODUCTS = window.ELYRA_PRODUCTS || PRODUCTS; PR = window.ELYRA_PRICING || PR; initProduct(); });
+      return;
+    }
     if (!p) {
       root.innerHTML = '<div class="empty"><h2>We could not find that piece</h2><p class="muted">It may have sold out or moved. Browse the collection or message us. We are happy to help.</p><div class="btn-row" style="justify-content:center"><a class="btn btn-gold" href="shop.html">Back to the collection</a><a class="btn btn-outline" href="#" data-wa="Hi Elyra, I was looking for a piece on your website.">WhatsApp us</a></div></div>';
       applyConfig(root);

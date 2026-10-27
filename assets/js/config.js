@@ -23,7 +23,7 @@ window.ELYRA = {
   gstin: "",                                // add your GSTIN here; it is hidden on the site while blank
 
   // ---- Web & social ----
-  siteUrl: "https://elyra.kynyx.com",  // live address (Vercel)
+  siteUrl: "https://elyrashree.com",  // live address (Vercel)
   instagram: "https://www.instagram.com/elyra_shree_creations/",
   facebook: "https://www.facebook.com/ElyraShreeCreations/",
   googleReviewsUrl: "https://www.google.com/maps/search/?api=1&query=Elyra+by+Shree+Creations+Patna",

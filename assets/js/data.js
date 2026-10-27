@@ -63,5 +63,7 @@
   }
 
   var timeout = new Promise(function (resolve) { setTimeout(resolve, 5000); });
-  window.ElyraDataReady = Promise.race([connect().then(load), timeout]);
+  // ElyraDataLoaded settles when the database answers, however slowly; the page waits for it before saying "not found"
+  window.ElyraDataLoaded = connect().then(load);
+  window.ElyraDataReady = Promise.race([window.ElyraDataLoaded, timeout]);
 })();

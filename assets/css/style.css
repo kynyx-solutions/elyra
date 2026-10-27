@@ -301,6 +301,7 @@ p { margin: 0 0 1em; }
 .updated { font-size: 0.85rem; color: var(--muted-dark); }
 
 .policy-layout { display: grid; grid-template-columns: 250px 1fr; gap: 56px; align-items: start; }
+.policy-layout > * { min-width: 0; } /* let wide tables scroll inside .table-scroll instead of widening the page */
 .policy-nav { position: sticky; top: 100px; padding: 22px; border-radius: var(--radius); background: var(--paper); border: 1px solid var(--line-light); }
 .policy-nav-title { font: 700 0.76rem var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-deep); margin-bottom: 12px; }
 .policy-nav ul { list-style: none; margin: 0; padding: 0; }
