@@ -243,8 +243,26 @@
     return true;
   }
 
+  // Email links (reset password, confirm sign-up) come back with either a session or an error in the address hash
+  function linkError() {
+    const p = new URLSearchParams(location.hash.replace(/^#\/?/, ""));
+    const expired = p.get("error_code") === "otp_expired";
+    history.replaceState(null, "", location.pathname);
+    app.innerHTML = authCard(`<h1>${expired ? "This link has expired" : "This link didn't work"}</h1>
+      <p>${expired ? "Email links work once and only for a limited time. Some email apps open links to scan them, which also uses them up." : esc(p.get("error_description") || "Something went wrong with the link.")}</p>
+      <p>Request a new link and open it straight away.</p>
+      <div class="auth-links"><a href="#/forgot">Send a new reset link</a><a href="#/login">Back to login</a></div>`);
+  }
+
   async function route() {
-    if (/access_token=|error_description=|type=recovery/.test(location.hash)) { app.innerHTML = authCard("<p>Signing you in…</p>"); return; }
+    if (/error_description=|error_code=/.test(location.hash)) return linkError();
+    if (/access_token=|type=recovery/.test(location.hash)) {
+      app.innerHTML = authCard("<p>Signing you in…</p>");
+      // Supabase reads the link, then clears the hash (which routes on) and fires PASSWORD_RECOVERY or SIGNED_IN
+      await db.auth.getSession();
+      if (/access_token=/.test(location.hash)) linkError();
+      return;
+    }
     const raw = location.hash.replace(/^#\/?/, "");
     const [path, query] = raw.split("?");
     const [name, id] = (path || "dashboard").split("/");
@@ -665,6 +683,10 @@
     const c = p.custom || {};
     const d = c.defaults || {};
     let images = (p.images || []).slice();
+    const colourImages = JSON.parse(JSON.stringify(p.colour_images || {}));
+    // one photo slot per metal colour; single-colour metals (platinum) use the bare metal key, as the website looks up "metal:colour" then "metal"
+    const colourSlots = Object.entries(metals).map(([m, v]) => ({ metal: m, label: v.label,
+      slots: v.colours.map((col) => ({ key: v.colours.length === 1 ? m : m + ":" + col, colour: col })) }));
     const allPurities = Object.entries(metals).flatMap(([m, v]) => v.purities.map((x) => [x.key, v.label + " " + x.label]));
     const allColours = [...new Set(Object.values(metals).flatMap((v) => v.colours))];
 
@@ -689,7 +711,9 @@
         <div class="panel"><h2>Photos</h2><p class="muted small">The first photo is the main one. JPG, PNG or WebP up to 10 MB; square photos of at least 1200 px look best.</p>
           <div class="images" id="imgs"></div>
           <div class="row" style="margin-top:12px"><label class="btn">Upload photos<input type="file" id="upload" accept="image/*" multiple hidden></label><span class="muted small" id="up-status"></span></div>
-          <div class="field" style="margin-top:14px"><label>Photos for other metals / colours (advanced)</label><textarea name="colour_images" rows="3" placeholder='{"gold:White": ["https://…"], "platinum": ["https://…"]}'>${esc(Object.keys(p.colour_images || {}).length ? JSON.stringify(p.colour_images, null, 2) : "")}</textarea><div class="hint">JSON. Keys: gold:Yellow, gold:White, gold:Rose, platinum, silver. Upload photos above, copy their link, then remove them from the main list.</div></div>
+        </div>
+        <div class="panel"><h2>Photos by metal colour</h2><p class="muted small">When a customer picks a colour on the website, its photos replace the main ones. Leave a colour empty to show the main photos. Only metals ticked under "Metals offered" are shown.</p>
+          <div id="colour-photos"></div>
         </div>
         <div class="panel"><h2>Customiser</h2>
           <div class="grid g4"><div class="field"><label>Diamond setting</label><select name="c_stones">${opt("centre", "Centre stone (solitaire / studs)", c.stones)}${opt("accent", "Many small diamonds (pavé, eternity, sets)", c.stones)}</select></div>
@@ -737,6 +761,51 @@
       renderImages();
     });
 
+    const SWATCH = { Yellow: "#e3b84f", White: "#e9e9ec", Rose: "#e8a98f", "Natural white": "#dcdde2" };
+    const swatchFor = (col) => SWATCH[col] || SWATCH[Object.keys(SWATCH).find((k) => col.startsWith(k))] || "#ccc";
+    function renderColourPhotos() {
+      const on = $$("[data-metal]", main).filter((x) => x.checked).map((x) => x.dataset.metal);
+      const known = new Set(colourSlots.flatMap((g) => g.slots.map((s) => s.key)));
+      // keep any older keys (e.g. a bare "silver") editable rather than silently dropping them
+      const extra = Object.keys(colourImages).filter((k) => !known.has(k));
+      const groups = colourSlots.filter((g) => on.includes(g.metal)).map((g) => ({ label: g.label, slots: g.slots.map((s) => ({ key: s.key, colour: s.colour, title: g.slots.length === 1 ? g.label : s.colour + " " + g.label.toLowerCase() })) }));
+      if (extra.length) groups.push({ label: "Other", slots: extra.map((k) => ({ key: k, colour: k, title: k })) });
+      $("#colour-photos", main).innerHTML = groups.length ? groups.map((g) => `<h3>${esc(g.label)}</h3><div class="colour-slots">${g.slots.map((s) => {
+        const list = colourImages[s.key] || [];
+        return `<div class="colour-slot" data-key="${esc(s.key)}"><div class="colour-slot-head"><span class="swatch" style="background:${swatchFor(s.colour)}"></span><b>${esc(s.title)}</b><span class="muted small">${list.length ? list.length + " photo" + (list.length > 1 ? "s" : "") : "Uses main photos"}</span></div>
+          <div class="images">${list.map((src, i) => `<div class="img-tile"><img src="${esc(imgUrl(src))}" alt="${esc(s.title)} photo ${i + 1}"><div class="row">
+            <button class="btn btn-sm" type="button" data-cmove="${i}" data-dir="-1"${i === 0 ? " disabled" : ""} aria-label="Move left">←</button>
+            <button class="btn btn-sm" type="button" data-cmove="${i}" data-dir="1"${i === list.length - 1 ? " disabled" : ""} aria-label="Move right">→</button>
+            <button class="btn btn-sm btn-danger" type="button" data-cremove="${i}" aria-label="Remove">✕</button></div></div>`).join("")}</div>
+          <div class="row" style="margin-top:10px"><label class="btn btn-sm">Upload ${esc(s.title)} photos<input type="file" data-cupload accept="image/*" multiple hidden></label><span class="muted small" data-cstatus></span></div></div>`;
+      }).join("")}</div>`).join("") : '<p class="muted small">Tick at least one metal under "Metals offered".</p>';
+    }
+    renderColourPhotos();
+    $$("[data-metal]", main).forEach((x) => x.addEventListener("change", renderColourPhotos));
+    $("#colour-photos", main).addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      const list = colourImages[b.closest("[data-key]").dataset.key];
+      if (b.dataset.cremove !== undefined) list.splice(Number(b.dataset.cremove), 1);
+      if (b.dataset.cmove !== undefined) { const i = Number(b.dataset.cmove), j = i + Number(b.dataset.dir); [list[i], list[j]] = [list[j], list[i]]; }
+      renderColourPhotos();
+    });
+    $("#colour-photos", main).addEventListener("change", async (e) => {
+      if (!e.target.matches("[data-cupload]")) return;
+      const slot = e.target.closest("[data-key]"), key = slot.dataset.key, status = $("[data-cstatus]", slot);
+      const sku = ($("[name=id]", main).value || "new").replace(/[^A-Za-z0-9_-]/g, "");
+      const files = [...e.target.files];
+      const added = [];
+      for (let i = 0; i < files.length; i++) {
+        status.textContent = `Uploading ${i + 1} of ${files.length}…`;
+        const url = await uploadMedia("products/" + sku + "/" + key.replace(/[^A-Za-z0-9]+/g, "-").toLowerCase(), files[i]);
+        if (url) added.push(url);
+      }
+      colourImages[key] = (colourImages[key] || []).concat(added);
+      renderColourPhotos();
+      if (added.length) toast("Uploaded. Remember to save.");
+    });
+
     $("#f", main).addEventListener("submit", async (e) => {
       e.preventDefault();
       const f = readForm(e.target);
@@ -744,14 +813,13 @@
       const metalsOn = $$("[data-metal]", main).filter((x) => x.checked).map((x) => x.dataset.metal);
       if (!carats.length) return toast("Add at least one carat choice.", "error");
       if (!metalsOn.length) return toast("Choose at least one metal.", "error");
-      let colourImages = {};
-      if (f.colour_images) { try { colourImages = JSON.parse(f.colour_images); } catch (err) { return toast("Photos for other metals: the JSON isn't valid.", "error"); } }
+      const colourPhotos = Object.fromEntries(Object.entries(colourImages).filter(([, list]) => list && list.length));
       const defCarat = carats.includes(f.d_carat) ? f.d_carat : carats[0];
       const row = {
         id: f.id, name: f.name, category: f.category, description: f.description || "", shape: f.shape || "", cut: f.cut || "", size: f.size || "",
         occasions: $$("[data-occ]", main).filter((x) => x.checked).map((x) => x.dataset.occ),
         status: f.status, stock: f.stock || 0, sort: f.sort ?? 100, made_to_order: f.made_to_order, featured: f.featured, engraving: f.engraving, sample: f.sample,
-        images, colour_images: colourImages,
+        images, colour_images: colourPhotos,
         custom: { stones: f.c_stones, pair: f.c_pair, carats, accentCarat: f.c_accentCarat || 0, baseWeight: f.c_baseWeight, metals: metalsOn,
           defaults: { metal: metalsOn.includes(f.d_metal) ? f.d_metal : metalsOn[0], purity: f.d_purity, colour: f.d_colour, stone: f.d_stone, quality: f.d_quality, carat: defCarat } }
       };

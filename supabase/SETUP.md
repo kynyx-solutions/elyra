@@ -31,8 +31,10 @@ In **Authentication → URL Configuration**:
 
 | Setting | Value |
 |---|---|
-| Site URL | `https://elyra.kynyx.com/admin/` (later `https://elyrashree.com/admin/`) |
-| Redirect URLs | add the same address, plus `http://localhost:8080/admin/` for local testing |
+| Site URL | `https://elyrashree.com/admin/` |
+| Redirect URLs | `https://elyrashree.com/admin/`, `https://www.elyrashree.com/admin/`, plus `http://localhost:8000/admin/` for local testing |
+
+> Reset and sign-up emails only go to addresses in this list. Anything else falls back to the Site URL, so if the domain changes, update both or the email links break.
 
 In **Authentication → Providers → Email**, keep **Email** enabled and **Confirm email** on.
 
