@@ -39,6 +39,7 @@ body {
   overflow-x: hidden;
 }
 img { max-width: 100%; display: block; }
+[hidden] { display: none !important; }
 /* footer always sits at the very bottom, with no empty space under it on short pages */
 body { display: flex; flex-direction: column; min-height: 100vh; }
 body > main { flex: 1 0 auto; }
@@ -399,8 +400,15 @@ p { margin: 0 0 1em; }
 .quote-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .quote-total span { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-dark); }
 .quote-total strong { font: 400 1.9rem/1.1 var(--serif); color: var(--text-dark); }
-.quote-box details { margin-top: 12px; }
-.quote-box summary { cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--gold-deep); }
+.quote-weights { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.quote-weights div { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--cream); }
+.quote-weights span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-dark); }
+.quote-weights strong { font-size: 0.92rem; color: var(--text-dark); }
+.quote-weights small { font-size: 0.8rem; color: var(--muted-dark); }
+.quote-out { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radius-sm); background: #f6ece4; color: #7a3b16; font-size: 0.9rem; }
+.chip-out span { opacity: 0.55; border-style: dashed; }
+.price-out { color: var(--muted-dark); font-weight: 600; }
+.quote-head { margin: 18px 0 0; font-size: 1.05rem; }
 .quote-table { margin-top: 10px; font-size: 0.88rem; }
 .quote-table th, .quote-table td { padding: 8px 4px; }
 .quote-table td { text-align: right; white-space: nowrap; }

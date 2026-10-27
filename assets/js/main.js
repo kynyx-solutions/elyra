@@ -163,13 +163,13 @@
     return src ? '<img src="' + esc(src) + '" alt="' + esc(p.name) + '" loading="lazy">' : placeholder();
   }
   function card(p) {
-    var d = normalise(p, defaultsOf(p));
+    var d = firstAvailable(p, normalise(p, defaultsOf(p))), qt = quote(p, d);
     return '<a class="pcard" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
       '<div class="pcard-media">' + media(p, 0, d) + (p.status === "sold_out" ? '<span class="badge">Sold out: made to order</span>' : p.sample && C.showSampleBadges ? '<span class="badge">Sample listing</span>' : "") + "</div>" +
       '<div class="pcard-body"><div class="pcard-cat">' + esc(CATEGORIES[p.category] || "") + "</div>" +
       "<h3>" + esc(p.name) + "</h3>" +
       '<p class="pcard-meta">' + esc(metalLabel(d)) + "<br>" + esc(caratLabel(p, d.carat)) + " " + esc(PR.stones[d.stone].short.toLowerCase()) + " diamond</p>" +
-      '<div class="price">' + inr(quote(p, d).total) + " <small>incl. GST · customisable</small></div></div></a>";
+      (qt.available ? '<div class="price">' + inr(qt.total) + " <small>incl. GST · customisable</small></div>" : '<div class="price price-out">Out of stock</div>') + "</div></a>";
   }
   function matches(p, spec) {
     if (!spec || spec === "all") return true;
@@ -220,8 +220,9 @@
           (!v.occasion || (p.occasions || []).indexOf(v.occasion) > -1) &&
           (!band || (basePrice(p) > band.min && basePrice(p) <= band.max));
       });
-      if (v.sort === "price-asc") list.sort(function (a, b) { return basePrice(a) - basePrice(b); });
-      if (v.sort === "price-desc") list.sort(function (a, b) { return basePrice(b) - basePrice(a); });
+      var sortPrice = function (p, none) { var n = basePrice(p); return n === null ? none : n; };
+      if (v.sort === "price-asc") list.sort(function (a, b) { return sortPrice(a, Infinity) - sortPrice(b, Infinity); });
+      if (v.sort === "price-desc") list.sort(function (a, b) { return sortPrice(b, -1) - sortPrice(a, -1); });
 
       grid.innerHTML = list.length ? list.map(card).join("") :
         '<div class="empty"><h3>No pieces match these filters yet</h3><p class="muted">Try removing a filter, or tell us what you are looking for and we will source or design it.</p><a class="btn btn-outline" href="consultation.html">Request a custom piece</a></div>';
@@ -246,6 +247,10 @@
   function find(list, key) { return list.filter(function (x) { return x.key === key; })[0]; }
   function purityOf(s) { var m = PR.metals[s.metal]; return find(m.purities, s.purity) || m.purities[0]; }
   function qualityOf(s) { return find(PR.qualities, s.quality) || PR.qualities[0]; }
+  function qualitiesFor(stone) {
+    var keys = (PR.stoneQualities || {})[stone];
+    return keys ? PR.qualities.filter(function (q) { return keys.indexOf(q.key) > -1; }) : PR.qualities;
+  }
   function sizeFactor(stone, carat) {
     var f = 1;
     PR.sizeFactors.forEach(function (b) { if (carat >= b.from) f = b[stone]; });
@@ -264,30 +269,49 @@
     if (!find(m.purities, s.purity)) s.purity = (find(m.purities, "18k") || m.purities[0]).key;
     if (m.colours.indexOf(s.colour) < 0) s.colour = m.colours[0];
     if (!PR.stones[s.stone]) s.stone = "natural";
-    if (!find(PR.qualities, s.quality)) s.quality = "premium";
+    var qs = qualitiesFor(s.stone);
+    if (!find(qs, s.quality)) s.quality = qs[0].key;
     s.carat = parseFloat(s.carat);
     if (c.carats.indexOf(s.carat) < 0) s.carat = c.defaults.carat;
     return s;
   }
+  function rateOf(table, s) { return ((PR[table] || {})[s.stone] || {})[s.quality] || 0; }
+  // available is false when a rate this piece needs is missing (0): that choice shows as out of stock
   function quote(p, s) {
     var c = p.custom, pu = purityOf(s);
     var weight = c.baseWeight * pu.density;
-    var metal = weight * PR.rates[s.metal] * pu.purity;
+    var metal = weight * (PR.rates[s.metal] || 0) * pu.purity;
     var making = weight * PR.metals[s.metal].making;
-    var stones;
-    if (c.stones === "centre") {
-      var each = c.pair ? s.carat / 2 : s.carat;
-      stones = s.carat * PR.centrePerCarat[s.stone][s.quality] * sizeFactor(s.stone, each) +
-        (c.accentCarat || 0) * PR.accentPerCarat[s.stone][s.quality];
-    } else {
-      stones = s.carat * PR.accentPerCarat[s.stone][s.quality];
-    }
+    var centreCarat = c.stones === "centre" ? s.carat : 0;
+    var sideCarat = c.stones === "centre" ? (c.accentCarat || 0) : s.carat;
+    var centreRate = rateOf("centrePerCarat", s), sideRate = rateOf("accentPerCarat", s);
+    var each = c.pair ? s.carat / 2 : s.carat;
+    var centre = centreCarat * centreRate * sizeFactor(s.stone, each);
+    var side = sideCarat * sideRate;
+    var available = !!PR.rates[s.metal] && (!centreCarat || centreRate > 0) && (!sideCarat || sideRate > 0);
     var engraving = s.engraving ? (PR.engravingCharge || 0) : 0;
-    var sub = metal + making + stones + engraving;
+    var sub = metal + making + centre + side + engraving;
     var total = Math.round(sub * (1 + PR.gst) / PR.roundTo) * PR.roundTo;
-    return { weight: weight, metal: metal, making: making, stones: stones, engraving: engraving, gst: sub * PR.gst, total: total };
+    return { weight: weight, metal: metal, making: making, centre: centre, side: side, centreCarat: centreCarat, sideCarat: sideCarat,
+      stones: centre + side, engraving: engraving, gst: sub * PR.gst, total: total, available: available };
   }
-  function basePrice(p) { return quote(p, normalise(p, defaultsOf(p))).total; }
+  function isAvailable(p, s) { return quote(p, s).available; }
+  // The product's default options, or the first metal / diamond / grade combination that has rates
+  function firstAvailable(p, s) {
+    if (isAvailable(p, s)) return s;
+    var found = null;
+    p.custom.metals.forEach(function (m) {
+      Object.keys(PR.stones).forEach(function (st) {
+        qualitiesFor(st).forEach(function (q) {
+          if (found) return;
+          var t = normalise(p, Object.assign({}, s, { metal: m, stone: st, quality: q.key }));
+          if (isAvailable(p, t)) found = t;
+        });
+      });
+    });
+    return found || s;
+  }
+  function basePrice(p) { var q = quote(p, firstAvailable(p, normalise(p, defaultsOf(p)))); return q.available ? q.total : null; }
   function metalLabel(s) {
     var pu = purityOf(s);
     if (s.metal === "platinum") return "Platinum " + pu.label;
@@ -312,7 +336,7 @@
   function chipGroup(name, title, current, options) {
     return '<fieldset class="opt"><legend>' + title + ' <span class="opt-value">' + esc(current) + "</span></legend><div class=\"chips\">" +
       options.map(function (o) {
-        return '<label class="chip' + (o.swatch ? " chip-swatch" : "") + '"><input type="radio" name="' + name + '" value="' + esc(o.value) + '"' + (o.checked ? " checked" : "") + ">" +
+        return '<label class="chip' + (o.swatch ? " chip-swatch" : "") + (o.out ? " chip-out" : "") + '"><input type="radio" name="' + name + '" value="' + esc(o.value) + '"' + (o.checked ? " checked" : "") + ">" +
           "<span>" + (o.swatch ? '<i style="background:' + o.swatch + '"></i>' : "") + esc(o.label) + (o.sub ? "<small>" + esc(o.sub) + "</small>" : "") + "</span></label>";
       }).join("") + "</div></fieldset>";
   }
@@ -333,6 +357,7 @@
     Object.keys(PARAMS).forEach(function (k) { if (params.get(PARAMS[k])) s[k] = params.get(PARAMS[k]); });
     s.size = ""; s.engraving = "";
     normalise(p, s);
+    if (!params.get("st") && !params.get("m")) s = firstAvailable(p, s);
 
     document.title = p.name + " | Elyra by Shree Creations";
     var imgs = p.images && p.images.length ? p.images : [];
@@ -371,8 +396,10 @@
               (p.engraving ? '<div class="field"><label for="pd-engrave">Engraving (free, optional)</label><input id="pd-engrave" name="engraving" maxlength="15" placeholder="e.g. S ♥ V 2026"></div>' : "") + "</div>" : "") +
           "</form>" +
           '<div class="quote-box"><div class="quote-total"><span>Your estimated price</span><strong id="pd-total"></strong></div>' +
-            '<details><summary>See price breakdown</summary><table class="table quote-table"><tbody id="pd-breakdown"></tbody></table>' +
-            '<p class="small muted">Based on rates as of ' + esc(PR.ratesUpdated) + ". Gold and diamond prices change, so your final price is confirmed in writing before you pay.</p></details>" +
+            '<p class="quote-out" id="pd-out" hidden>This piece isn\'t available with ' + "<span></span>" + ' right now. Choose another option above, or message us and we will check for you.</p>' +
+            '<div id="pd-quote"><div class="quote-weights" id="pd-weights"></div>' +
+            '<h3 class="quote-head">Price break-up</h3><table class="table quote-table"><tbody id="pd-breakdown"></tbody></table>' +
+            '<p class="small muted">Based on rates as of ' + esc(PR.ratesUpdated) + ". Gold and diamond prices change, so your final price is confirmed in writing before you pay.</p></div>" +
             '<div class="btn-row"><a class="btn btn-gold" id="pd-order" href="#" target="_blank" rel="noopener" data-track="' + esc(p.id) + '">' + WA_ICON + " Order on WhatsApp</a>" +
             '<a class="btn btn-outline" id="pd-call" href="#" target="_blank" rel="noopener">Book a call</a></div></div>' +
           '<ul class="pd-promise" id="pd-promise"></ul>' +
@@ -383,11 +410,19 @@
 
     var opts = document.getElementById("pd-options");
 
+    // would this piece be orderable if one option changed?
+    // a metal or diamond type counts as in stock if any of its grades has rates; a grade must have its own
+    function okWith(key, value) {
+      var t = Object.assign({}, s); t[key] = value; normalise(p, t);
+      if (key === "quality") return isAvailable(p, t);
+      return qualitiesFor(t.stone).some(function (q) { return isAvailable(p, Object.assign({}, t, { quality: q.key })); });
+    }
+    var OUT = "Out of stock";
     function renderOptions() {
-      var c = p.custom, m = PR.metals[s.metal], q = qualityOf(s);
+      var c = p.custom, m = PR.metals[s.metal], qs = qualitiesFor(s.stone), q = qualityOf(s);
       opts.innerHTML =
         chipGroup("metal", "Metal", PR.metals[s.metal].label, c.metals.map(function (k) {
-          return { value: k, label: PR.metals[k].label, checked: k === s.metal };
+          return { value: k, label: PR.metals[k].label, sub: okWith("metal", k) ? "" : OUT, out: !okWith("metal", k), checked: k === s.metal };
         })) +
         (m.purities.length > 1 ? chipGroup("purity", "Purity", purityOf(s).detail, m.purities.map(function (x) {
           return { value: x.key, label: x.label, sub: x.detail, checked: x.key === s.purity };
@@ -396,12 +431,12 @@
           return { value: x, label: x, swatch: SWATCH[x], checked: x === s.colour };
         })) : "") +
         chipGroup("stone", "Diamond", PR.stones[s.stone].label, Object.keys(PR.stones).map(function (k) {
-          return { value: k, label: PR.stones[k].short, checked: k === s.stone };
+          return { value: k, label: PR.stones[k].short, sub: okWith("stone", k) ? "" : OUT, out: !okWith("stone", k), checked: k === s.stone };
         })) +
         '<p class="opt-note">' + esc(PR.stones[s.stone].note) + ' <a href="learn.html#natural-vs-lab">Compare</a></p>' +
-        chipGroup("quality", "Quality", q.color + " colour · " + q.clarity + " clarity", PR.qualities.map(function (x) {
-          return { value: x.key, label: x.label, sub: x.color + " · " + x.clarity, checked: x.key === s.quality };
-        })) +
+        (qs.length > 1 ? chipGroup("quality", "Quality", q.color + " colour · " + q.clarity + " clarity", qs.map(function (x) {
+          return { value: x.key, label: x.label, sub: okWith("quality", x.key) ? x.color + " · " + x.clarity : OUT, out: !okWith("quality", x.key), checked: x.key === s.quality };
+        })) : "") +
         chipGroup("carat", c.stones === "accent" ? "Total diamond weight" : c.pair ? "Carat (pair total)" : "Carat", caratLabel(p, s.carat), c.carats.map(function (n) {
           return { value: String(n), label: n.toFixed(2) + " ct", checked: n === s.carat };
         }));
@@ -414,18 +449,30 @@
       var inStock = p.status !== "sold_out" && (p.stock === undefined || p.stock > 0);
       var ready = !p.madeToOrder && isDefault && !s.engraving && inStock;
 
-      document.getElementById("pd-price").textContent = inr(qt.total);
-      document.getElementById("pd-total").textContent = inr(qt.total);
+      var out = !qt.available;
+      document.getElementById("pd-price").textContent = out ? "Out of stock" : inr(qt.total);
+      document.getElementById("pd-total").textContent = out ? "Out of stock" : inr(qt.total);
+      document.getElementById("pd-quote").hidden = out;
+      document.getElementById("pd-out").hidden = !out;
+      document.querySelector("#pd-out span").textContent = PR.stones[s.stone].label.toLowerCase() + (qualitiesFor(s.stone).length > 1 ? " (" + q.label + ")" : "") + " in " + metalLabel(s);
+      document.getElementById("pd-order").hidden = out;
+      document.getElementById("pd-call").textContent = out ? "Ask on WhatsApp" : "Book a call";
       document.getElementById("pd-chip").innerHTML = DIAMOND + " " + esc(PR.stones[s.stone].label) + " · " + esc(metalLabel(s));
+      // laid out like BlueStone: weights first, then one line per component
+      document.getElementById("pd-weights").innerHTML =
+        "<div><span>Metal</span><strong>" + esc(metalLabel(s)) + "</strong><small>≈ " + qt.weight.toFixed(2) + " g</small></div>" +
+        "<div><span>Diamond</span><strong>" + esc(PR.stones[s.stone].short) + " · " + esc(caratLabel(p, s.carat)) + "</strong><small>" +
+          esc((qt.centreCarat && qt.sideCarat ? "+ " + qt.sideCarat.toFixed(2) + " ct side · " : "") + q.color + " · " + q.clarity) + "</small></div>";
       document.getElementById("pd-breakdown").innerHTML = [
-        [metalLabel(s) + " (≈ " + qt.weight.toFixed(1) + " g)", qt.metal],
-        ["Diamonds: " + caratLabel(p, s.carat) + ", " + q.label.toLowerCase(), qt.stones],
-        ["Making & setting", qt.making],
+        [PR.metals[s.metal].label + " (" + qt.weight.toFixed(2) + " g)", qt.metal],
+        qt.centreCarat ? ["Centre diamond (" + caratLabel(p, qt.centreCarat) + ")", qt.centre] : null,
+        qt.sideCarat ? ["Side diamonds (" + qt.sideCarat.toFixed(2) + " ct)", qt.side] : null,
+        ["Making charge", qt.making],
         qt.engraving ? ["Engraving", qt.engraving] : null,
         ["GST (" + Math.round(PR.gst * 100) + "%)", qt.gst]
       ].filter(Boolean).map(function (r) {
         return '<tr><th scope="row">' + esc(r[0]) + "</th><td>" + inr(r[1]) + "</td></tr>";
-      }).join("") + '<tr class="quote-sum"><th scope="row">Estimated total</th><td>' + inr(qt.total) + "</td></tr>";
+      }).join("") + '<tr class="quote-sum"><th scope="row">Total</th><td>' + inr(qt.total) + "</td></tr>";
 
       var rows = [
         ["Diamond type", PR.stones[s.stone].label],
@@ -475,8 +522,7 @@
       var t = e.target;
       if (!t.name) return;
       s[t.name] = t.value;
-      if (t.name === "metal") normalise(p, s);
-      if (t.name === "carat") s.carat = parseFloat(t.value);
+      if (t.name !== "size" && t.name !== "engraving") normalise(p, s);
       if (t.name !== "size" && t.name !== "engraving") {
         renderOptions();
         var again = opts.querySelector('input[name="' + t.name + '"][value="' + t.value + '"]');
@@ -489,7 +535,7 @@
       saveLead({
         type: type, product_id: p.id, product_name: p.name,
         config: { metal: metalLabel(s), stone: PR.stones[s.stone].label, quality: q.label + " (" + q.color + ", " + q.clarity + ")", carat: caratLabel(p, s.carat), ring_size: s.size || null, engraving: s.engraving || null },
-        estimated_price: quote(p, s).total,
+        estimated_price: quote(p, s).available ? quote(p, s).total : null,
         details: { note: "Customer tapped \"" + (type === "order" ? "Order on WhatsApp" : "Book a call") + "\". Contact details arrive on WhatsApp." }
       });
     }
@@ -525,7 +571,8 @@
       name: p.name, sku: p.id, description: p.description,
       brand: { "@type": "Brand", name: "Elyra by Shree Creations" },
       image: imagesFor(normalise(p, defaultsOf(p))).map(function (src) { return new URL(src, location.href).href; }),
-      offers: { "@type": "Offer", priceCurrency: "INR", price: basePrice(p), availability: "https://schema.org/InStock", url: location.href.split("&")[0] }
+      offers: basePrice(p) === null ? { "@type": "Offer", availability: "https://schema.org/OutOfStock", url: location.href.split("&")[0] } :
+        { "@type": "Offer", priceCurrency: "INR", price: basePrice(p), availability: "https://schema.org/InStock", url: location.href.split("&")[0] }
     });
     document.head.appendChild(ld);
   }

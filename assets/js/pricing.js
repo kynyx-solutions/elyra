@@ -60,6 +60,10 @@ window.ELYRA_PRICING = {
     { key: "exceptional", label: "Exceptional", color: "E–F", clarity: "VVS1–VVS2", note: "Near-colourless, near-flawless" }
   ],
 
+  // Grades offered for each diamond type; the first is the default. A grade whose
+  // rate below is 0 shows as out of stock for the products that need it.
+  stoneQualities: { natural: ["classic"], labgrown: ["premium", "exceptional"] },
+
   // ₹ per carat for a 0.50 ct centre stone, Excellent / Very Good cut
   centrePerCarat: {
     natural:  { classic: 150000, premium: 210000, exceptional: 320000 },

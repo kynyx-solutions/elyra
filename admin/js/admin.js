@@ -726,7 +726,7 @@
             <div class="field"><label>Purity</label><select name="d_purity">${allPurities.map(([k, v]) => opt(k, v, d.purity)).join("")}</select></div>
             <div class="field"><label>Colour</label><select name="d_colour">${allColours.map((k) => opt(k, k, d.colour)).join("")}</select></div>
             <div class="field"><label>Diamond</label><select name="d_stone">${Object.entries(pricing.stones || FILE_PRICING.stones).map(([k, v]) => opt(k, v.short, d.stone)).join("")}</select></div>
-            <div class="field"><label>Quality</label><select name="d_quality">${(pricing.qualities || FILE_PRICING.qualities).map((q) => opt(q.key, q.label, d.quality)).join("")}</select></div>
+            <div class="field"><label>Quality</label><select name="d_quality">${(pricing.qualities || FILE_PRICING.qualities).map((q) => opt(q.key, q.label, d.quality)).join("")}</select><div class="hint">Natural diamonds use Classic; lab-grown use Premium or Exceptional. Other choices are corrected on the website.</div></div>
             <div class="field"><label>Carat</label><input name="d_carat" type="number" min="0.01" step="0.01" value="${esc(d.carat)}"></div></div>
         </div>
         <div class="row"><button class="btn btn-gold" type="submit">${isNew ? "Add product" : "Save product"}</button><span class="spacer"></span>${isNew ? "" : '<button class="btn btn-danger" id="del" type="button">Delete product</button>'}</div>
@@ -1040,9 +1040,12 @@
     const site = Object.assign({}, FILE_SITE, siteDB || {});
     const alerts = alertsDB || { enabled: true, emails: [site.email].filter(Boolean) };
     const Q = pr.qualities || [];
+    // grades offered per diamond type (pricing.js stoneQualities); other cells are not used on the site
+    const offered = (s, q) => !pr.stoneQualities || !pr.stoneQualities[s] || pr.stoneQualities[s].includes(q);
     const num = (name, value, step = "1") => `<input type="number" name="${name}" min="0" step="${step}" value="${esc(value)}">`;
     const stoneTable = (title, key) => `<h3>${title} (₹ per carat)</h3><div class="table-wrap"><table><thead><tr><th>Diamond</th>${Q.map((q) => `<th>${esc(q.label)}<br><span class="muted small">${esc(q.color)} · ${esc(q.clarity)}</span></th>`).join("")}</tr></thead><tbody>
-      ${Object.entries(pr.stones || {}).map(([s, v]) => `<tr><th>${esc(v.short)}</th>${Q.map((q) => `<td>${num(`${key}.${s}.${q.key}`, pr[key]?.[s]?.[q.key] ?? 0, "500")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+      ${Object.entries(pr.stones || {}).map(([s, v]) => `<tr><th>${esc(v.short)}</th>${Q.map((q) => offered(s, q.key) ? `<td>${num(`${key}.${s}.${q.key}`, pr[key]?.[s]?.[q.key] ?? 0, "500")}</td>` : '<td class="muted small">Not offered</td>').join("")}</tr>`).join("")}</tbody></table></div>
+      <p class="muted small">Leave a rate at 0 and products that need it show "Out of stock" for that diamond on the website.</p>`;
 
     main.innerHTML = `
       <div class="page-head"><div><h1>Rates &amp; settings</h1><p>Changes go live on the website as soon as you save.</p></div></div>
@@ -1079,7 +1082,7 @@
       next.roundTo = f.roundTo || 1;
       next.engravingCharge = f.engravingCharge || 0;
       next.certificateFrom = f.certificateFrom || 0;
-      ["centrePerCarat", "accentPerCarat"].forEach((key) => Object.keys(next.stones).forEach((s) => Q.forEach((q) => { next[key][s][q.key] = f[`${key}.${s}.${q.key}`] || 0; })));
+      ["centrePerCarat", "accentPerCarat"].forEach((key) => Object.keys(next.stones).forEach((s) => Q.forEach((q) => { if (offered(s, q.key)) next[key][s][q.key] = f[`${key}.${s}.${q.key}`] || 0; })));
       next.sizeFactors = (next.sizeFactors || []).map((b, i) => { const o = { from: f[`sf.${i}.from`] || 0 }; Object.keys(next.stones).forEach((s) => { o[s] = f[`sf.${i}.${s}`] || 0; }); return o; }).sort((a, b) => a.from - b.from);
       next.ratesUpdated = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
       await busy($("button", e.target), async () => { if (await saveSetting("pricing", next)) { toast("Rates saved. Website prices updated."); route(); } });
