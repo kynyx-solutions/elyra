@@ -1,6 +1,6 @@
 # Elyra login email templates
 
-Paste these into **Supabase → Authentication → Emails → Templates**. Set up your own email sender (SMTP) first; see `supabase/SETUP.md`.
+Paste these into **Supabase → Authentication → Emails → Templates**. Set up Resend as the email sender first; see `supabase/SETUP.md`, step 6a.
 
 | Supabase template | Subject | File |
 |---|---|---|

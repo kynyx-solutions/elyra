@@ -38,7 +38,7 @@ In **Authentication → URL Configuration**:
 
 In **Authentication → Providers → Email**, keep **Email** enabled and **Confirm email** on.
 
-> Supabase's built-in email sender is rate-limited and meant for testing. Before you invite several staff, add your own SMTP under **Authentication → Emails → SMTP settings**. Resend, Zoho Mail or your domain's email all work.
+> Supabase's built-in email sender is rate-limited and meant for testing. Send login emails from your own domain through **Resend** instead (step 6a), then paste the branded templates from `supabase/email-templates/`.
 
 ## 4. Connect the website
 
@@ -64,12 +64,36 @@ In **Authentication → Providers → Email**, keep **Email** enabled and **Conf
 
 An email that wasn't invited can create a login but sees "No access yet". The database rules block all data for it.
 
-## 6. Optional: email alerts for new leads
+## 6a. Branded email through Resend
 
-This needs a free **Resend** account (resend.com) and, ideally, your own domain (elyrashree.com) verified in Resend.
+Resend (resend.com, free up to 3,000 emails a month) sends every Elyra email from `elyrashree.com`: login emails from Supabase and new-lead alerts.
 
-1. **Resend:** sign up, verify your domain (Domains → Add), and create an **API key**.
-2. **Deploy the function:** Supabase → **Edge Functions → Deploy a new function → Via editor**. Name it **`lead-alert`**, paste **`supabase/functions/lead-alert/index.ts`**, and click **Deploy**.
+1. **Sign up** at resend.com with the business email.
+2. **Add the domain:** Domains → **Add domain** → `elyrashree.com`, region **Tokyo (ap-northeast-1)** or the closest to India.
+3. **DNS:** Resend lists 3–4 records (an MX and a TXT on `send`, a TXT on `resend._domainkey`). Add each in **Cloudflare → DNS → Add record** exactly as shown, proxy **off** (grey cloud). They sit on sub-names, so they do not touch the existing email-forwarding MX records on `elyrashree.com`.
+   Also add a DMARC record: Type `TXT`, Name `_dmarc`, Content `v=DMARC1; p=none; rua=mailto:shreeelyra@gmail.com`.
+4. Click **Verify DNS records** in Resend and wait until the domain shows **Verified** (usually minutes).
+5. **API key:** API Keys → **Create API key**, permission **Sending access**, domain `elyrashree.com`. Copy it (it is shown once).
+6. **Supabase login emails:** Authentication → Emails → **SMTP settings** → enable **Custom SMTP**:
+
+   | Field | Value |
+   |---|---|
+   | Sender email | `noreply@elyrashree.com` |
+   | Sender name | `Elyra by Shree Creations` |
+   | Host | `smtp.resend.com` |
+   | Port | `465` |
+   | Username | `resend` |
+   | Password | the Resend API key |
+
+   Save, then raise **Authentication → Rate limits → emails per hour** (e.g. to 30); the built-in limit is very low.
+7. **Templates:** paste the three files from `supabase/email-templates/` (see its README).
+8. **Replies:** Resend can only send from `@elyrashree.com`, never from a Gmail address. Replies reach Gmail through **Cloudflare → Email → Email Routing**: rule `noreply@elyrashree.com` → `shreeelyra@gmail.com` (add more addresses, or a catch-all, the same way). Cloudflare manages the domain's MX and SPF records for this, so don't edit them by hand.
+
+## 6b. Optional: email alerts for new leads
+
+Uses the same Resend account and API key from 6a.
+
+1. **Deploy the function:** Supabase → **Edge Functions → Deploy a new function → Via editor**. Name it **`lead-alert`**, paste **`supabase/functions/lead-alert/index.ts`**, and click **Deploy**.
    - In the function's settings, turn **off** "Verify JWT", because the webhook uses its own secret.
 3. **Add secrets** in Edge Functions → **Secrets**:
 
@@ -78,7 +102,7 @@ This needs a free **Resend** account (resend.com) and, ideally, your own domain 
    | `RESEND_API_KEY` | your Resend API key |
    | `ALERT_FROM` | `Elyra Leads <leads@elyrashree.com>` |
    | `WEBHOOK_SECRET` | any long random text |
-   | `ADMIN_URL` | `https://elyra.kynyx.com/admin/` |
+   | `ADMIN_URL` | `https://elyrashree.com/admin/` |
 
 4. **Create the webhook:** go to **Database → Webhooks → Create a new hook**:
    - **Table:** `leads`, **Events:** Insert
